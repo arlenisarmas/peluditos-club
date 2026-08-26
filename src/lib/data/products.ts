@@ -1,0 +1,292 @@
+import { Product } from "@/lib/types";
+
+// Datos simulados para la Fase 1. La forma de este archivo (y las funciones
+// de más abajo) es la misma que va a tener la consulta a Prisma en la Fase 2:
+// los componentes que llaman a getProducts()/getProductBySlug() no se van a
+// enterar del cambio.
+export const products: Product[] = [
+  {
+    id: "1",
+    name: "Cama Donut Súper Suave",
+    slug: "cama-donut-super-suave",
+    description:
+      "Máxima comodidad para el descanso de tu peludito. Material ultra suave, cálido y antiestrés, ideal para perros de todos los tamaños. Base antideslizante y funda lavable.",
+    shortDescription: "Máxima comodidad para el descanso de tu peludito.",
+    category: "accesorios",
+    price: 799,
+    comparePrice: 999,
+    stock: 24,
+    sku: "PEL-CAM-001",
+    images: ["/images/dogs/golden-puppy-sleeping-bed.png"],
+    thumbnail: "/images/dogs/golden-puppy-sleeping-bed.png",
+    rating: 4.5,
+    reviewCount: 128,
+    colors: [
+      { name: "Gris", hex: "#9CA3AF" },
+      { name: "Beige", hex: "#D9C7A8" },
+      { name: "Marrón", hex: "#7A5230" },
+      { name: "Rosa", hex: "#F4B6C2" },
+    ],
+    sizes: ["S (50 cm)", "M (60 cm)", "L (70 cm)", "XL (90 cm)"],
+    featured: true,
+    active: true,
+    createdAt: "2026-01-10",
+    updatedAt: "2026-01-10",
+  },
+  {
+    id: "2",
+    name: "Correa Classic Comfort",
+    slug: "correa-classic-comfort",
+    description:
+      "Correa resistente con acolchado ergonómico para paseos largos sin lastimar tu mano. Hebilla de seguridad reforzada y largo ajustable.",
+    shortDescription: "Acolchado ergonómico para paseos largos y cómodos.",
+    category: "accesorios",
+    price: 249,
+    stock: 40,
+    sku: "PEL-COR-002",
+    images: ["/images/dogs/corgi-bandana-yellow.png"],
+    thumbnail: "/images/dogs/corgi-bandana-yellow.png",
+    rating: 4.5,
+    reviewCount: 81,
+    colors: [
+      { name: "Negro", hex: "#111111" },
+      { name: "Azul", hex: "#43AEEF" },
+    ],
+    featured: true,
+    active: true,
+    createdAt: "2026-01-12",
+    updatedAt: "2026-01-12",
+  },
+  {
+    id: "3",
+    name: "Gafas de Sol para Mascota",
+    slug: "gafas-de-sol-para-mascota",
+    description:
+      "Protegé los ojos de tu perro en los paseos soleados con estas gafas livianas, flexibles y con correa ajustable.",
+    shortDescription: "Protección solar con estilo para tu paseo.",
+    category: "accesorios",
+    price: 349,
+    stock: 15,
+    sku: "PEL-GAF-003",
+    images: ["/images/dogs/bulldog-sunglasses.png"],
+    thumbnail: "/images/dogs/bulldog-sunglasses.png",
+    rating: 4.7,
+    reviewCount: 52,
+    featured: false,
+    active: true,
+    createdAt: "2026-01-15",
+    updatedAt: "2026-01-15",
+  },
+  {
+    id: "4",
+    name: "Pañuelo Bandana Amarilla",
+    slug: "panuelo-bandana-amarilla",
+    description:
+      "Bandana de algodón suave, perfecta para looks especiales o el paseo de todos los días. Fácil de anudar y lavar.",
+    shortDescription: "Un toque de estilo para el paseo diario.",
+    category: "accesorios",
+    price: 149,
+    stock: 60,
+    sku: "PEL-BAN-004",
+    images: ["/images/dogs/corgi-bandana-yellow.png"],
+    thumbnail: "/images/dogs/corgi-bandana-yellow.png",
+    rating: 4.4,
+    reviewCount: 40,
+    sizes: ["S", "M", "L"],
+    featured: false,
+    active: true,
+    createdAt: "2026-01-16",
+    updatedAt: "2026-01-16",
+  },
+  {
+    id: "5",
+    name: "Hoodie Amarillo Comfy",
+    slug: "hoodie-amarillo-comfy",
+    description:
+      "Buzo con capucha de algodón para los días frescos. Corte cómodo que no limita el movimiento, con puños elastizados.",
+    shortDescription: "Abrigo y estilo para los días frescos.",
+    category: "ropa",
+    price: 429,
+    comparePrice: 549,
+    stock: 18,
+    sku: "PEL-HOO-005",
+    images: ["/images/dogs/doodle-hoodie-yellow.png"],
+    thumbnail: "/images/dogs/doodle-hoodie-yellow.png",
+    rating: 4.6,
+    reviewCount: 63,
+    sizes: ["XS", "S", "M", "L"],
+    featured: false,
+    active: true,
+    createdAt: "2026-01-18",
+    updatedAt: "2026-01-18",
+  },
+  {
+    id: "6",
+    name: "Sweater Invierno Suave",
+    slug: "sweater-invierno-suave",
+    description:
+      "Sweater tejido bien abrigado para las razas más sensibles al frío. Cuello alto y tela que no pica.",
+    shortDescription: "Abrigo extra para el invierno.",
+    category: "ropa",
+    price: 459,
+    stock: 22,
+    sku: "PEL-SWE-006",
+    images: ["/images/dogs/hero-doodle-cream.png"],
+    thumbnail: "/images/dogs/hero-doodle-cream.png",
+    rating: 4.3,
+    reviewCount: 21,
+    sizes: ["S", "M", "L"],
+    featured: false,
+    active: true,
+    createdAt: "2026-01-19",
+    updatedAt: "2026-01-19",
+  },
+  {
+    id: "7",
+    name: "Peluche Perrito Kisses",
+    slug: "peluche-perrito-kisses",
+    description:
+      "Peluche súper suave con forma de perrito, ideal para morder y acompañar la siesta. Costuras reforzadas y relleno hipoalergénico.",
+    shortDescription: "Juguete suave para morder y acompañar.",
+    category: "juguetes",
+    price: 199,
+    stock: 50,
+    sku: "PEL-PEL-007",
+    images: ["/images/dogs/golden-retriever-puppy-ball.png"],
+    thumbnail: "/images/dogs/golden-retriever-puppy-ball.png",
+    rating: 4.6,
+    reviewCount: 94,
+    featured: true,
+    active: true,
+    createdAt: "2026-01-20",
+    updatedAt: "2026-01-20",
+  },
+  {
+    id: "8",
+    name: "Pelota Antirroturas",
+    slug: "pelota-antirroturas",
+    description:
+      "Pelota de goma resistente a mordidas fuertes, perfecta para el juego de buscar y traer. Flota en el agua.",
+    shortDescription: "Resistente a las mordidas más fuertes.",
+    category: "juguetes",
+    price: 179,
+    stock: 70,
+    sku: "PEL-PLT-008",
+    images: ["/images/dogs/golden-retriever-puppy-ball.png"],
+    thumbnail: "/images/dogs/golden-retriever-puppy-ball.png",
+    rating: 4.5,
+    reviewCount: 110,
+    featured: false,
+    active: true,
+    createdAt: "2026-01-21",
+    updatedAt: "2026-01-21",
+  },
+  {
+    id: "9",
+    name: "Kit Interactivo Buscador",
+    slug: "kit-interactivo-buscador",
+    description:
+      "Set de juguetes de olfato que estimula la mente de tu perro y ayuda a reducir la ansiedad. Ideal para razas activas.",
+    shortDescription: "Estimulación mental para razas activas.",
+    category: "juguetes",
+    price: 389,
+    stock: 12,
+    sku: "PEL-KIT-009",
+    images: ["/images/dogs/bulldog-peeking.png"],
+    thumbnail: "/images/dogs/bulldog-peeking.png",
+    rating: 4.2,
+    reviewCount: 18,
+    featured: false,
+    active: true,
+    createdAt: "2026-01-22",
+    updatedAt: "2026-01-22",
+  },
+  {
+    id: "10",
+    name: "Plato Antideslizante Acero Inox.",
+    slug: "plato-antideslizante-acero-inox",
+    description:
+      "Plato de acero inoxidable con base de goma antideslizante. Fácil de higienizar, no retiene olores ni bacterias.",
+    shortDescription: "Higiénico y firme durante la comida.",
+    category: "comederos",
+    price: 219,
+    stock: 45,
+    sku: "PEL-PLA-010",
+    images: ["/images/dogs/corgi-bowl-blue.png"],
+    thumbnail: "/images/dogs/corgi-bowl-blue.png",
+    rating: 4.5,
+    reviewCount: 76,
+    featured: true,
+    active: true,
+    createdAt: "2026-01-23",
+    updatedAt: "2026-01-23",
+  },
+  {
+    id: "11",
+    name: "Comedero Doble Acero",
+    slug: "comedero-doble-acero",
+    description:
+      "Set de dos platos en soporte elevado, pensado para mejorar la postura al comer y beber. Ideal para razas medianas y grandes.",
+    shortDescription: "Postura correcta a la hora de comer.",
+    category: "comederos",
+    price: 259,
+    stock: 30,
+    sku: "PEL-COM-011",
+    images: ["/images/dogs/corgi-bowl-blue.png"],
+    thumbnail: "/images/dogs/corgi-bowl-blue.png",
+    rating: 4.4,
+    reviewCount: 30,
+    featured: false,
+    active: true,
+    createdAt: "2026-01-24",
+    updatedAt: "2026-01-24",
+  },
+  {
+    id: "12",
+    name: "Dispensador de Agua Automático",
+    slug: "dispensador-de-agua-automatico",
+    description:
+      "Fuente de agua con filtro y circulación continua, para que tu perro siempre tenga agua fresca disponible.",
+    shortDescription: "Agua fresca disponible todo el día.",
+    category: "comederos",
+    price: 599,
+    stock: 10,
+    sku: "PEL-DIS-012",
+    images: ["/images/dogs/hero-golden-retriever.png"],
+    thumbnail: "/images/dogs/hero-golden-retriever.png",
+    rating: 4.1,
+    reviewCount: 12,
+    featured: false,
+    active: true,
+    createdAt: "2026-01-25",
+    updatedAt: "2026-01-25",
+  },
+];
+
+export function getProducts() {
+  return products.filter((p) => p.active);
+}
+
+export function getFeaturedProducts() {
+  return getProducts().filter((p) => p.featured);
+}
+
+export function getProductBySlug(slug: string) {
+  return products.find((p) => p.slug === slug && p.active);
+}
+
+export function getProductsByCategory(categorySlug: string) {
+  return getProducts().filter((p) => p.category === categorySlug);
+}
+
+export function searchProducts(query: string) {
+  const q = query.trim().toLowerCase();
+  if (!q) return [];
+  return getProducts().filter(
+    (p) =>
+      p.name.toLowerCase().includes(q) ||
+      p.shortDescription.toLowerCase().includes(q) ||
+      p.category.toLowerCase().includes(q) ||
+      p.sku.toLowerCase().includes(q)
+  );
+}
