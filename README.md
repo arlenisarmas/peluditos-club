@@ -2,7 +2,7 @@
 
 Tienda online de productos para mascotas. "Todo para consentir a tu peludito."
 
-Este repo se construye por fases — ver el estado actual en [`docs/PROGRESS.md`](docs/PROGRESS.md). Completas: **Fase 1** (tienda frontend), **Fase 2** (base de datos real) y **Fase 3** (autenticación + panel admin).
+Este repo se construye por fases — ver el estado actual en [`docs/PROGRESS.md`](docs/PROGRESS.md). Completas: **Fase 1** (tienda frontend), **Fase 2** (base de datos real) y **Fase 3** (autenticación + panel admin). En curso: **Fase 4** (checkout + Mercado Pago) y **Fase 5** (Cloudinary) — el código de ambas está listo, falta cargar credenciales reales (ver `.env.example`).
 
 ## Stack
 
@@ -60,7 +60,7 @@ DATABASE_URL="postgresql://postgres:postgres@localhost:5432/peluditos_club?schem
 - Login simple de email + contraseña (`src/lib/auth.ts`, proveedor Credentials de NextAuth, sesión JWT). No usa redes sociales para no depender de otra cuenta externa.
 - Rutas protegidas en dos capas: `src/proxy.ts` (chequeo rápido) + un chequeo real de sesión en `src/app/admin/(dashboard)/layout.tsx` (así lo recomienda Next.js: el proxy no debe ser la única barrera de auth).
 - **Productos**: crear, editar, borrar, activar/ocultar, destacar, precio/descuento, stock, categoría, talles y colores.
-- **Imágenes de producto**: subida múltiple, elegir imagen principal, borrar, reordenar. Se guardan en `public/images/products/` (local, no se commitea a git) hasta migrar a Cloudinary en la Fase 5.
+- **Imágenes de producto**: subida múltiple, elegir imagen principal, borrar, reordenar. Se suben a Cloudinary (`src/lib/cloudinary.ts`) — necesita `CLOUDINARY_CLOUD_NAME`/`CLOUDINARY_API_KEY`/`CLOUDINARY_API_SECRET` en `.env` (ver `.env.example`); sin esas credenciales, subir una imagen muestra un error explicando qué falta.
 - **Categorías**: crear, editar, borrar (si no tienen productos), reordenar.
 - **Inventario**: agotados / stock bajo (≤10) / stock normal.
 - **Pedidos**: pantalla lista pero vacía hasta la Fase 4 (necesita el modelo de pedidos que trae Mercado Pago).
@@ -109,8 +109,8 @@ docs/
 
 Cada una arranca cuando haya credenciales/cuentas disponibles para esa pieza:
 
-4. **Carrito persistente + checkout + Mercado Pago**: Checkout Pro y webhook de confirmación de pago.
-5. **Cloudinary**: migrar `public/images` (incluidas las subidas del admin) a un CDN con optimización automática.
+4. **Carrito persistente + checkout + Mercado Pago**: Checkout Pro y webhook de confirmación de pago. Código listo; falta `MP_ACCESS_TOKEN` real y, para producción, un dominio público (el webhook no funciona contra `localhost`).
+5. **Cloudinary**: las imágenes que se suben desde el admin van a Cloudinary en vez del disco local (necesario para producción — un hosting serverless no persiste archivos escritos en runtime). Código listo; falta crear la cuenta gratis y cargar las credenciales. Los assets de marca/stock (`public/images/`) quedan como están: ya están commiteados a git y Next.js los optimiza solo.
 6. **SEO + performance + seguridad**: JSON-LD, sitemap, auditoría Lighthouse, hardening.
 7. **Empaquetado final para GitHub**: README y `.env.example` definitivos, instrucciones de deploy.
 

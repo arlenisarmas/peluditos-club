@@ -3,9 +3,8 @@
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import fs from "node:fs/promises";
-import path from "node:path";
 import { prisma } from "@/lib/prisma";
+import { deleteImage, publicIdFromUrl, uploadImage } from "@/lib/cloudinary";
 
 const productSchema = z.object({
   name: z.string().min(2),
@@ -107,15 +106,20 @@ export async function deleteProduct(id: string) {
   redirect("/admin/productos");
 }
 
-const PRODUCTS_DIR = path.join(process.cwd(), "public", "images", "products");
+// Las fotos originales del catálogo (público/images/dogs, banners, etc., usadas
+// como placeholders al sembrar la base) no viven en Cloudinary y no hay que
+// intentar borrarlas ahí.
+function isCloudinaryUrl(url: string) {
+  return url.includes("res.cloudinary.com");
+}
 
-async function deleteImageFile(publicPath: string) {
-  if (!publicPath.startsWith("/images/products/")) return; // no borrar assets originales del catálogo
-  try {
-    await fs.unlink(path.join(process.cwd(), "public", publicPath));
-  } catch {
-    // el archivo ya no está; no es un error real para el usuario
-  }
+async function deleteImageFile(url: string) {
+  if (!isCloudinaryUrl(url)) return;
+  const publicId = publicIdFromUrl(url);
+  if (!publicId) return;
+  await deleteImage(publicId).catch(() => {
+    // ya no existe en Cloudinary; no es un error real para el usuario
+  });
 }
 
 export async function uploadProductImage(id: string, formData: FormData) {
@@ -123,20 +127,15 @@ export async function uploadProductImage(id: string, formData: FormData) {
   if (!(file instanceof File) || file.size === 0) return;
 
   const product = await prisma.product.findUniqueOrThrow({ where: { id } });
-  await fs.mkdir(PRODUCTS_DIR, { recursive: true });
-
-  const ext = (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "");
-  const filename = `${product.slug}-${Date.now()}.${ext}`;
   const buffer = Buffer.from(await file.arrayBuffer());
-  await fs.writeFile(path.join(PRODUCTS_DIR, filename), buffer);
+  const { secureUrl } = await uploadImage(buffer, `${product.slug}-${Date.now()}`);
 
-  const publicPath = `/images/products/${filename}`;
-  const images = [...product.images, publicPath];
+  const images = [...product.images, secureUrl];
   await prisma.product.update({
     where: { id },
     data: {
       images,
-      thumbnail: product.thumbnail || publicPath,
+      thumbnail: product.thumbnail || secureUrl,
     },
   });
 

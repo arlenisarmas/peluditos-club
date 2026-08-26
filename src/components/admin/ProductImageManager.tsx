@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useRef, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import {
   removeProductImage,
   reorderProductImage,
@@ -19,12 +19,18 @@ export function ProductImageManager({
   thumbnail: string;
 }) {
   const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
   function handleUpload(formData: FormData) {
+    setError(null);
     startTransition(async () => {
-      await uploadProductImage(productId, formData);
-      formRef.current?.reset();
+      try {
+        await uploadProductImage(productId, formData);
+        formRef.current?.reset();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "No se pudo subir la imagen.");
+      }
     });
   }
 
@@ -99,9 +105,12 @@ export function ProductImageManager({
           {isPending ? "Subiendo..." : "Subir imagen"}
         </button>
       </form>
-      <p className="mt-2 text-xs text-brand-gray">
-        Las imágenes se guardan en el servidor local por ahora — se migran a Cloudinary en la Fase 5.
-      </p>
+      {error && (
+        <p role="alert" className="mt-2 text-xs text-brand-coral">
+          {error}
+        </p>
+      )}
+      <p className="mt-2 text-xs text-brand-gray">Las imágenes se suben a Cloudinary.</p>
     </div>
   );
 }
