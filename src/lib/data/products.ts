@@ -2,7 +2,7 @@ import { Prisma, Product as PrismaProduct } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { Product, ProductColor } from "@/lib/types";
 
-function mapProduct(row: PrismaProduct): Product {
+export function mapProduct(row: PrismaProduct): Product {
   return {
     id: row.id,
     name: row.name,

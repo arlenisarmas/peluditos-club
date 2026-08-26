@@ -28,10 +28,12 @@ export interface Product {
 }
 
 export interface Category {
+  id: string;
   name: string;
   slug: string;
   image: string;
   bgClass: string;
+  order: number;
 }
 
 export interface Benefit {

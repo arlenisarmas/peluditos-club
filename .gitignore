@@ -34,6 +34,11 @@ yarn-error.log*
 .env*
 !.env.example
 
+# imágenes subidas desde el panel admin: quedan solo en disco local hasta
+# migrar a Cloudinary en la Fase 5
+/public/images/products/*
+!/public/images/products/.gitkeep
+
 # vercel
 .vercel
 

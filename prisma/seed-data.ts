@@ -8,24 +8,28 @@ export const categoriesSeedData = [
     slug: "accesorios",
     image: "/images/dogs/bulldog-sunglasses.png",
     bgClass: "bg-brand-sky",
+    order: 0,
   },
   {
     name: "Ropa",
     slug: "ropa",
     image: "/images/dogs/doodle-hoodie-yellow.png",
     bgClass: "bg-brand-cream",
+    order: 1,
   },
   {
     name: "Juguetes",
     slug: "juguetes",
     image: "/images/dogs/golden-retriever-puppy-ball.png",
     bgClass: "bg-pink-100",
+    order: 2,
   },
   {
     name: "Comederos",
     slug: "comederos",
     image: "/images/dogs/corgi-bowl-blue.png",
     bgClass: "bg-brand-sky",
+    order: 3,
   },
 ];
 

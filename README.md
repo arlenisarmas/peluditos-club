@@ -2,27 +2,28 @@
 
 Tienda online de productos para mascotas. "Todo para consentir a tu peludito."
 
-Este repo se construye por fases — ver el estado actual en [`docs/PROGRESS.md`](docs/PROGRESS.md). Completas: **Fase 1** (tienda frontend) y **Fase 2** (base de datos real con PostgreSQL + Prisma).
+Este repo se construye por fases — ver el estado actual en [`docs/PROGRESS.md`](docs/PROGRESS.md). Completas: **Fase 1** (tienda frontend), **Fase 2** (base de datos real) y **Fase 3** (autenticación + panel admin).
 
 ## Stack
 
 - [Next.js](https://nextjs.org) (App Router) + TypeScript
 - [Tailwind CSS](https://tailwindcss.com) v4
 - [PostgreSQL](https://www.postgresql.org) + [Prisma](https://www.prisma.io) (ORM) — catálogo de productos y categorías
+- [NextAuth (Auth.js v4)](https://next-auth.js.org) — login del panel admin (usuario y contraseña, sin redes sociales)
 - Carrito con React Context + `localStorage` (persiste entre recargas; todavía no tiene backend — llega en la Fase 4)
 
 ## Cómo correr el proyecto
 
-Necesitás PostgreSQL corriendo localmente (ver más abajo) y un archivo `.env` con `DATABASE_URL` (copiá `.env.example` y completalo).
+Necesitás PostgreSQL corriendo localmente (ver más abajo) y un archivo `.env` completo (copiá `.env.example`).
 
 ```bash
-npm install        # también genera el cliente de Prisma (postinstall)
-npm run db:push     # o: npx prisma migrate dev, si vas a crear una migración nueva
-npm run db:seed      # carga el catálogo inicial (mismos datos de la Fase 1)
+npm install         # también genera el cliente de Prisma (postinstall)
+npm run db:push      # o: npx prisma migrate dev, si vas a crear una migración nueva
+npm run db:seed       # carga el catálogo inicial y el usuario admin (lee ADMIN_EMAIL/ADMIN_PASSWORD de .env)
 npm run dev
 ```
 
-Abrí [http://localhost:3000](http://localhost:3000).
+Abrí [http://localhost:3000](http://localhost:3000) para la tienda, o [http://localhost:3000/admin](http://localhost:3000/admin) para el panel admin (con el email/contraseña que hayas puesto en `ADMIN_EMAIL`/`ADMIN_PASSWORD`).
 
 Otros comandos:
 
@@ -48,35 +49,55 @@ El instalador de `winget` deja un usuario `postgres` con contraseña `postgres` 
 CREATE DATABASE peluditos_club;
 ```
 
-Y en `.env`:
+Y en `.env` (ver `.env.example` para la lista completa, incluyendo `NEXTAUTH_SECRET`, `ADMIN_EMAIL` y `ADMIN_PASSWORD`):
 
 ```
 DATABASE_URL="postgresql://postgres:postgres@localhost:5432/peluditos_club?schema=public"
 ```
 
+## Panel admin (`/admin`)
+
+- Login simple de email + contraseña (`src/lib/auth.ts`, proveedor Credentials de NextAuth, sesión JWT). No usa redes sociales para no depender de otra cuenta externa.
+- Rutas protegidas en dos capas: `src/proxy.ts` (chequeo rápido) + un chequeo real de sesión en `src/app/admin/(dashboard)/layout.tsx` (así lo recomienda Next.js: el proxy no debe ser la única barrera de auth).
+- **Productos**: crear, editar, borrar, activar/ocultar, destacar, precio/descuento, stock, categoría, talles y colores.
+- **Imágenes de producto**: subida múltiple, elegir imagen principal, borrar, reordenar. Se guardan en `public/images/products/` (local, no se commitea a git) hasta migrar a Cloudinary en la Fase 5.
+- **Categorías**: crear, editar, borrar (si no tienen productos), reordenar.
+- **Inventario**: agotados / stock bajo (≤10) / stock normal.
+- **Pedidos**: pantalla lista pero vacía hasta la Fase 4 (necesita el modelo de pedidos que trae Mercado Pago).
+
 ## Estructura de carpetas
 
 ```
 prisma/
-  schema.prisma          Modelos Product y Category
+  schema.prisma          Modelos Product, Category, AdminUser
   migrations/              Historial de migraciones (se commitea a git)
   seed.ts / seed-data.ts   Script de seed — seed-data.ts tiene el catálogo original de la Fase 1
 src/
-  app/                  Rutas (App Router): home, tienda, categoría, producto, carrito, checkout, etc.
+  app/
+    (storefront)/         Rutas públicas: home, tienda, categoría, producto, carrito, checkout, etc.
+    admin/
+      login/                Login (sin el shell del panel)
+      (dashboard)/          Resto del panel (productos, categorías, inventario, pedidos) — protegido
+    api/auth/[...nextauth]/ Route handler de NextAuth
   components/
-    layout/              Header, Footer, MobileNav, PromoBar
+    layout/              Header, Footer, MobileNav, PromoBar (tienda)
+    admin/                AdminSidebar, ProductForm, ProductImageManager, CategoryRow, etc.
     home/                Hero, Benefits, CategorySection, FeaturedProducts
     products/            ProductCard, ProductGrid, ProductGallery, ProductDetail, ProductFilters
     cart/                CartItem, CartSummary
     ui/                  Button, Badge, RatingStars, Decorations (SVG), ComingSoon
   lib/
     data/                products.ts, categories.ts — consultan Prisma; benefits.ts sigue siendo estático
+    actions/              Server Actions del admin (products.ts, categories.ts)
+    auth.ts               Configuración de NextAuth (Credentials + JWT)
     prisma.ts             Instancia única de PrismaClient
     types.ts             Product, Category, CartLine
     cart-context.tsx     Carrito (Context + localStorage)
     filters.ts           Filtrado/orden de productos (tienda y categoría)
+  proxy.ts               Protege /admin (excepto /admin/login) a nivel de request
 public/
   images/                dogs/, icons/, brand/, banners/ — assets reales del usuario, ya procesados
+                          products/ — imágenes subidas desde el admin (no se commitea, ver .gitignore)
 scripts/
   process-assets.mjs     Script (ya ejecutado) que limpió el fondo de los assets originales
 docs/
@@ -84,13 +105,12 @@ docs/
   design-reference/       Los 2 mockups completos (mobile/desktop) como referencia visual — no se sirven en el sitio
 ```
 
-## Próximos pasos (fases 3 a 7)
+## Próximos pasos (fases 4 a 7)
 
 Cada una arranca cuando haya credenciales/cuentas disponibles para esa pieza:
 
-3. **Autenticación + panel admin**: Auth.js y `/admin` con CRUD de productos, categorías, inventario y pedidos.
 4. **Carrito persistente + checkout + Mercado Pago**: Checkout Pro y webhook de confirmación de pago.
-5. **Cloudinary**: migrar `public/images` a un CDN con optimización automática.
+5. **Cloudinary**: migrar `public/images` (incluidas las subidas del admin) a un CDN con optimización automática.
 6. **SEO + performance + seguridad**: JSON-LD, sitemap, auditoría Lighthouse, hardening.
 7. **Empaquetado final para GitHub**: README y `.env.example` definitivos, instrucciones de deploy.
 

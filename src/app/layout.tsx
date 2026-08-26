@@ -2,10 +2,6 @@ import type { Metadata } from "next";
 import { Poppins, Pacifico } from "next/font/google";
 import "./globals.css";
 import { CartProvider } from "@/lib/cart-context";
-import { PromoBar } from "@/components/layout/PromoBar";
-import { Header } from "@/components/layout/Header";
-import { Footer } from "@/components/layout/Footer";
-import { MobileNav } from "@/components/layout/MobileNav";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -35,13 +31,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${poppins.variable} ${pacifico.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-sans text-brand-black">
-        <CartProvider>
-          <PromoBar />
-          <Header />
-          <main className="flex-1 pb-16 lg:pb-0">{children}</main>
-          <Footer />
-          <MobileNav />
-        </CartProvider>
+        <CartProvider>{children}</CartProvider>
       </body>
     </html>
   );

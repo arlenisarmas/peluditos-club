@@ -4,7 +4,7 @@ Ver el plan completo y el contexto de cada fase en la conversación original / `
 
 - [x] **Fase 1 — Tienda frontend con datos simulados.** Next.js + TypeScript + Tailwind, catálogo con datos simulados (`src/lib/data/`), carrito con `localStorage`, todas las páginas públicas (home, tienda, categoría, producto, carrito, checkout UI, ofertas, nosotros, ayuda, contacto). Sin base de datos, sin auth, sin pagos reales todavía.
 - [x] **Fase 2 — Backend real.** PostgreSQL local + Prisma. `src/lib/data/products.ts` y `categories.ts` ahora consultan la base real; el catálogo de la Fase 1 se movió a `prisma/seed-data.ts` y se sembró con `prisma/seed.ts`. Migraciones versionadas en `prisma/migrations/`.
-- [ ] **Fase 3 — Autenticación + Panel admin.** Auth.js, `/admin` protegido, CRUD de productos/categorías/inventario/pedidos, subida de imágenes.
+- [x] **Fase 3 — Autenticación + Panel admin.** NextAuth (Credentials + JWT) protegiendo `/admin` en dos capas (`src/proxy.ts` + chequeo de sesión en el layout). CRUD completo de productos (con imágenes: subir/borrar/reordenar/elegir principal) y categorías (con reorden), pantalla de inventario, y un stub de pedidos que se activa en la Fase 4.
 - [ ] **Fase 4 — Carrito persistente + Checkout + Mercado Pago.** Carrito en DB para usuarios logueados, Checkout Pro, webhook de confirmación de pago.
 - [ ] **Fase 5 — Cloudinary.** Migrar imágenes de `public/images` a Cloudinary.
 - [ ] **Fase 6 — SEO + Performance + Seguridad.** JSON-LD por producto, sitemap, metadata, auditoría Lighthouse, hardening (Zod, rate limiting, headers).
@@ -24,3 +24,11 @@ Ver el plan completo y el contexto de cada fase en la conversación original / `
 - Se usó **Prisma Migrate** (`prisma migrate dev`), no `db push`, para tener historial de migraciones versionado y commiteado — importante de cara a producción y a trabajar en equipo.
 - Se instaló Prisma con la versión mayor **6.x** a propósito: `npm install prisma` sin fijar versión trajo la 7 (recién salida), que cambió la forma de configurar la conexión (adaptadores de driver + archivo de config nuevo) de una manera mucho más compleja de lo que hace falta para este proyecto. Reevaluar esto si en el futuro se quiere actualizar.
 - `src/lib/data/benefits.ts` se dejó sin tocar (sigue siendo un array estático): son 3 textos fijos sin necesidad de administración desde el panel.
+
+## Notas de la Fase 3
+
+- Login con NextAuth v4 (Credentials + sesión JWT), un solo usuario admin (modelo `AdminUser`, contraseña con bcrypt). Se eligió esto en vez de login social para no depender de otra cuenta externa (Google/GitHub OAuth) en esta etapa.
+- Next.js 16 renombró `middleware.ts` a `proxy.ts` (misma función, otro nombre) — el archivo real está en `src/proxy.ts`. Además, Next recomienda no confiar solo en el proxy para autorización real, así que se sumó un chequeo de sesión (`redirect` si no hay sesión) directamente en `src/app/admin/(dashboard)/layout.tsx`.
+- Las rutas públicas se movieron a `src/app/(storefront)/` (route group) para que la tienda y el admin tengan layouts totalmente distintos sin compartir header/footer.
+- Verificado de punta a punta con un usuario de prueba temporal (creado y borrado por la sesión, sin usar la contraseña real del usuario): login vía `/api/auth/callback/credentials`, sesión persistida, y las 6 páginas del panel devolviendo 200 tanto sin sesión (redirigen a login) como con sesión (entran).
+- Las imágenes que se suben desde el admin quedan en `public/images/products/` en disco local (no se commitea a git) hasta la Fase 5, donde se migra todo a Cloudinary.
