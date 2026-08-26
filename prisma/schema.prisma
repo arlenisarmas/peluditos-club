@@ -55,3 +55,48 @@ model Product {
   @@index([category])
   @@map("products")
 }
+
+enum OrderStatus {
+  PENDING
+  PAID
+  PREPARING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+model Order {
+  id             String      @id @default(cuid())
+  status         OrderStatus @default(PENDING)
+  customerName   String
+  customerEmail  String
+  customerPhone  String
+  address        String
+  city           String
+  province       String
+  postalCode     String
+  subtotal       Int
+  total          Int
+  mpPreferenceId String?
+  mpPaymentId    String?
+  items          OrderItem[]
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId   String
+  productId String
+  name      String
+  price     Int
+  quantity  Int
+  color     String?
+  size      String?
+
+  @@index([orderId])
+  @@map("order_items")
+}

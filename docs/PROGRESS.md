@@ -25,6 +25,13 @@ Ver el plan completo y el contexto de cada fase en la conversación original / `
 - Se instaló Prisma con la versión mayor **6.x** a propósito: `npm install prisma` sin fijar versión trajo la 7 (recién salida), que cambió la forma de configurar la conexión (adaptadores de driver + archivo de config nuevo) de una manera mucho más compleja de lo que hace falta para este proyecto. Reevaluar esto si en el futuro se quiere actualizar.
 - `src/lib/data/benefits.ts` se dejó sin tocar (sigue siendo un array estático): son 3 textos fijos sin necesidad de administración desde el panel.
 
+## Notas de la Fase 4 (en curso)
+
+- El checkout es "guest checkout": no requiere login (el proyecto no tiene cuentas de cliente, solo el usuario admin de la Fase 3). El form de `/checkout` ahora llama a la server action `createCheckout` (`src/lib/actions/checkout.ts`), que crea el `Order` en la base **antes** de ir a Mercado Pago, y recién después genera la preferencia de pago con esa orden como `external_reference`.
+- Confirmación del pago por dos caminos, ambos reutilizan `syncPaymentById` (`src/lib/payment-sync.ts`): el webhook `/api/webhooks/mercadopago` (la fuente de verdad real, server-to-server) y, como respaldo, las páginas `checkout/exito` y `checkout/pendiente` vuelven a consultar el pago al llegar — necesario en desarrollo local porque Mercado Pago no puede llamarle a un webhook en `localhost`.
+- Si el pago es rechazado (`checkout/error`) el carrito **no** se vacía, para que el cliente pueda reintentar sin perder la selección; en éxito y pendiente sí se vacía (el pedido ya quedó creado en la base).
+- Pendiente para cerrar la fase: conseguir credenciales de prueba de Mercado Pago (`MP_ACCESS_TOKEN`), y para producción un dominio público (Mercado Pago no acepta `notification_url` con `localhost`) — ver `.env.example`.
+
 ## Notas de la Fase 3
 
 - Login con NextAuth v4 (Credentials + sesión JWT), un solo usuario admin (modelo `AdminUser`, contraseña con bcrypt). Se eligió esto en vez de login social para no depender de otra cuenta externa (Google/GitHub OAuth) en esta etapa.
