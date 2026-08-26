@@ -12,13 +12,14 @@ interface CategoriaPageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
-export function generateStaticParams() {
-  return getCategories().map((c) => ({ slug: c.slug }));
+export async function generateStaticParams() {
+  const categories = await getCategories();
+  return categories.map((c) => ({ slug: c.slug }));
 }
 
 export async function generateMetadata({ params }: CategoriaPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const category = getCategoryBySlug(slug);
+  const category = await getCategoryBySlug(slug);
   return {
     title: category ? `${category.name} | Peluditos Club` : "Categoría | Peluditos Club",
   };
@@ -26,7 +27,7 @@ export async function generateMetadata({ params }: CategoriaPageProps): Promise<
 
 export default async function CategoriaPage({ params, searchParams }: CategoriaPageProps) {
   const { slug } = await params;
-  const category = getCategoryBySlug(slug);
+  const category = await getCategoryBySlug(slug);
   if (!category) notFound();
 
   const sp = await searchParams;
@@ -34,7 +35,8 @@ export default async function CategoriaPage({ params, searchParams }: CategoriaP
   const min = typeof sp.min === "string" && sp.min ? Number(sp.min) : undefined;
   const max = typeof sp.max === "string" && sp.max ? Number(sp.max) : undefined;
 
-  const products = applyFilters(getProductsByCategory(slug), { sort, minPrice: min, maxPrice: max });
+  const productsByCategory = await getProductsByCategory(slug);
+  const products = applyFilters(productsByCategory, { sort, minPrice: min, maxPrice: max });
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">

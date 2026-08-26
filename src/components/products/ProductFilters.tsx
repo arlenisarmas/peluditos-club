@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { getCategories } from "@/lib/data/categories";
+import { Category } from "@/lib/types";
 
 const SORT_OPTIONS: { value: string; label: string }[] = [
   { value: "relevancia", label: "Relevancia" },
@@ -11,11 +11,16 @@ const SORT_OPTIONS: { value: string; label: string }[] = [
   { value: "novedades", label: "Novedades" },
 ];
 
-export function ProductFilters({ hideCategory = false }: { hideCategory?: boolean }) {
+export function ProductFilters({
+  categories = [],
+  hideCategory = false,
+}: {
+  categories?: Category[];
+  hideCategory?: boolean;
+}) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const categories = getCategories();
 
   function setParam(key: string, value: string) {
     const params = new URLSearchParams(searchParams.toString());

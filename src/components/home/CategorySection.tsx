@@ -2,8 +2,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { getCategories } from "@/lib/data/categories";
 
-export function CategorySection() {
-  const categories = getCategories();
+export async function CategorySection() {
+  const categories = await getCategories();
   return (
     <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
       <h2 className="text-center text-2xl font-extrabold sm:text-3xl">Explora por categoría</h2>

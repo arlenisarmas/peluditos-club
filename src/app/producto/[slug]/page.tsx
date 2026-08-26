@@ -7,13 +7,14 @@ interface ProductoPageProps {
   params: Promise<{ slug: string }>;
 }
 
-export function generateStaticParams() {
-  return getProducts().map((p) => ({ slug: p.slug }));
+export async function generateStaticParams() {
+  const products = await getProducts();
+  return products.map((p) => ({ slug: p.slug }));
 }
 
 export async function generateMetadata({ params }: ProductoPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const product = getProductBySlug(slug);
+  const product = await getProductBySlug(slug);
   if (!product) return { title: "Producto no encontrado | Peluditos Club" };
   return {
     title: `${product.name} | Peluditos Club`,
@@ -28,7 +29,7 @@ export async function generateMetadata({ params }: ProductoPageProps): Promise<M
 
 export default async function ProductoPage({ params }: ProductoPageProps) {
   const { slug } = await params;
-  const product = getProductBySlug(slug);
+  const product = await getProductBySlug(slug);
   if (!product) notFound();
 
   return (

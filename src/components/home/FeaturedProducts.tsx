@@ -3,8 +3,8 @@ import { ButtonLink } from "@/components/ui/Button";
 import { getFeaturedProducts } from "@/lib/data/products";
 import { ProductGrid } from "@/components/products/ProductGrid";
 
-export function FeaturedProducts() {
-  const products = getFeaturedProducts();
+export async function FeaturedProducts() {
+  const products = await getFeaturedProducts();
   return (
     <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
       <h2 className="flex items-center justify-center gap-2 text-center text-2xl font-extrabold sm:text-3xl">

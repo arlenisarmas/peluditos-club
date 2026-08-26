@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { getProducts } from "@/lib/data/products";
+import { getCategories } from "@/lib/data/categories";
 import { applyFilters, SortOption } from "@/lib/filters";
 import { ProductGrid } from "@/components/products/ProductGrid";
 import { ProductFilters } from "@/components/products/ProductFilters";
@@ -22,7 +23,8 @@ export default async function TiendaPage({ searchParams }: TiendaPageProps) {
   const min = typeof sp.min === "string" && sp.min ? Number(sp.min) : undefined;
   const max = typeof sp.max === "string" && sp.max ? Number(sp.max) : undefined;
 
-  const products = applyFilters(getProducts(), { category, q, sort, minPrice: min, maxPrice: max });
+  const [allProducts, categories] = await Promise.all([getProducts(), getCategories()]);
+  const products = applyFilters(allProducts, { category, q, sort, minPrice: min, maxPrice: max });
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -36,7 +38,7 @@ export default async function TiendaPage({ searchParams }: TiendaPageProps) {
 
       <div className="mt-4">
         <Suspense fallback={null}>
-          <ProductFilters />
+          <ProductFilters categories={categories} />
         </Suspense>
       </div>
 

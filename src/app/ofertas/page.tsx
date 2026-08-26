@@ -8,8 +8,9 @@ export const metadata: Metadata = {
   description: "Descuentos en productos seleccionados para tu peludito.",
 };
 
-export default function OfertasPage() {
-  const products = getProducts().filter((p) => p.comparePrice);
+export default async function OfertasPage() {
+  const allProducts = await getProducts();
+  const products = allProducts.filter((p) => p.comparePrice);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
