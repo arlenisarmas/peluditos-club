@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { Preference } from "mercadopago";
 import { prisma } from "@/lib/prisma";
 import { getMercadoPagoClient } from "@/lib/mercadopago";
+import { getSiteUrl } from "@/lib/site";
 import { CartLine } from "@/lib/types";
 
 const checkoutSchema = z.object({
@@ -21,10 +22,6 @@ const checkoutSchema = z.object({
 
 export interface CheckoutState {
   error?: string;
-}
-
-function getSiteUrl() {
-  return process.env.NEXTAUTH_URL || "http://localhost:3000";
 }
 
 export async function createCheckout(

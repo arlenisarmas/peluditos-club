@@ -2,7 +2,7 @@
 
 Tienda online de productos para mascotas. "Todo para consentir a tu peludito."
 
-Este repo se construye por fases — ver el estado actual en [`docs/PROGRESS.md`](docs/PROGRESS.md). Completas: **Fase 1** (tienda frontend), **Fase 2** (base de datos real) y **Fase 3** (autenticación + panel admin). En curso: **Fase 4** (checkout + Mercado Pago) y **Fase 5** (Cloudinary) — el código de ambas está listo, falta cargar credenciales reales (ver `.env.example`).
+Este repo se construye por fases — ver el estado actual en [`docs/PROGRESS.md`](docs/PROGRESS.md). Completas: **Fase 1** (tienda frontend), **Fase 2** (base de datos real), **Fase 3** (autenticación + panel admin) y **Fase 6** (SEO + performance + seguridad). En curso: **Fase 4** (checkout + Mercado Pago) y **Fase 5** (Cloudinary) — el código de ambas está listo, falta cargar credenciales reales (ver `.env.example`).
 
 ## Stack
 
@@ -105,13 +105,19 @@ docs/
   design-reference/       Los 2 mockups completos (mobile/desktop) como referencia visual — no se sirven en el sitio
 ```
 
-## Próximos pasos (fases 4 a 7)
+## SEO, performance y seguridad (Fase 6)
 
-Cada una arranca cuando haya credenciales/cuentas disponibles para esa pieza:
+- **JSON-LD**: cada página de producto (`/producto/[slug]`) incluye datos estructurados `Product` (schema.org) con precio, disponibilidad y rating.
+- **Sitemap y robots**: `/sitemap.xml` (dinámico, incluye productos y categorías activos) y `/robots.txt` (bloquea `/admin/`, `/api/` y las páginas de resultado del checkout).
+- **Metadata**: Open Graph/Twitter por defecto en `src/app/layout.tsx`; `metadataBase` sigue a `NEXTAUTH_URL`, así que no hace falta tocar código al desplegar.
+- **Seguridad**: headers estándar (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, `Strict-Transport-Security`) en `next.config.ts`; rate limiting en memoria (`src/lib/rate-limit.ts`) para el login del admin y el webhook de Mercado Pago; validación con Zod en todas las server actions.
 
-4. **Carrito persistente + checkout + Mercado Pago**: Checkout Pro y webhook de confirmación de pago. Código listo; falta `MP_ACCESS_TOKEN` real y, para producción, un dominio público (el webhook no funciona contra `localhost`).
-5. **Cloudinary**: las imágenes que se suben desde el admin van a Cloudinary en vez del disco local (necesario para producción — un hosting serverless no persiste archivos escritos en runtime). Código listo; falta crear la cuenta gratis y cargar las credenciales. Los assets de marca/stock (`public/images/`) quedan como están: ya están commiteados a git y Next.js los optimiza solo.
-6. **SEO + performance + seguridad**: JSON-LD, sitemap, auditoría Lighthouse, hardening.
+## Próximos pasos (fases 4, 5 y 7)
+
+Fases 4 y 5 arrancan de verdad cuando haya credenciales/cuentas disponibles para esa pieza (el código ya está listo):
+
+4. **Carrito persistente + checkout + Mercado Pago**: Checkout Pro y webhook de confirmación de pago. Falta `MP_ACCESS_TOKEN` real y, para producción, un dominio público (el webhook no funciona contra `localhost`).
+5. **Cloudinary**: las imágenes que se suben desde el admin van a Cloudinary en vez del disco local (necesario para producción — un hosting serverless no persiste archivos escritos en runtime). Falta crear la cuenta gratis y cargar las credenciales. Los assets de marca/stock (`public/images/`) quedan como están: ya están commiteados a git y Next.js los optimiza solo.
 7. **Empaquetado final para GitHub**: README y `.env.example` definitivos, instrucciones de deploy.
 
 Ver `.env.example` para las variables de entorno que va a necesitar cada fase.

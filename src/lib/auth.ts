@@ -2,6 +2,7 @@ import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { isRateLimited } from "@/lib/rate-limit";
 
 export const authOptions: NextAuthOptions = {
   session: { strategy: "jwt" },
@@ -18,9 +19,14 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         if (!credentials?.email || !credentials.password) return null;
 
-        const admin = await prisma.adminUser.findUnique({
-          where: { email: credentials.email.toLowerCase().trim() },
-        });
+        const email = credentials.email.toLowerCase().trim();
+        // Máximo 5 intentos cada 15 minutos por email, para frenar fuerza bruta
+        // contra el único usuario admin. No distinguimos el motivo en la
+        // respuesta (misma pantalla de "email o contraseña incorrectos") para
+        // no darle pistas a quien esté probando contraseñas.
+        if (isRateLimited(`admin-login:${email}`, 5, 15 * 60 * 1000)) return null;
+
+        const admin = await prisma.adminUser.findUnique({ where: { email } });
         if (!admin) return null;
 
         const valid = await bcrypt.compare(credentials.password, admin.passwordHash);

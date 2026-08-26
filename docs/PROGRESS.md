@@ -7,7 +7,7 @@ Ver el plan completo y el contexto de cada fase en la conversación original / `
 - [x] **Fase 3 — Autenticación + Panel admin.** NextAuth (Credentials + JWT) protegiendo `/admin` en dos capas (`src/proxy.ts` + chequeo de sesión en el layout). CRUD completo de productos (con imágenes: subir/borrar/reordenar/elegir principal) y categorías (con reorden), pantalla de inventario, y un stub de pedidos que se activa en la Fase 4.
 - [ ] **Fase 4 — Carrito persistente + Checkout + Mercado Pago.** Carrito en DB para usuarios logueados, Checkout Pro, webhook de confirmación de pago.
 - [ ] **Fase 5 — Cloudinary.** Migrar a Cloudinary las imágenes que se suben desde el admin (los assets de marca/stock de `public/images` quedan como están: ya funcionan bien commiteados a git).
-- [ ] **Fase 6 — SEO + Performance + Seguridad.** JSON-LD por producto, sitemap, metadata, auditoría Lighthouse, hardening (Zod, rate limiting, headers).
+- [x] **Fase 6 — SEO + Performance + Seguridad.** JSON-LD por producto, sitemap + robots dinámicos, metadata (Open Graph/Twitter), headers de seguridad, rate limiting en login y webhook. Sin dependencias externas pendientes.
 - [ ] **Fase 7 — Empaquetado para GitHub.** Revisión final de README, licencias de assets, `.env.example` completo, instrucciones de deploy.
 
 ## Notas de la Fase 1
@@ -24,6 +24,17 @@ Ver el plan completo y el contexto de cada fase en la conversación original / `
 - Se usó **Prisma Migrate** (`prisma migrate dev`), no `db push`, para tener historial de migraciones versionado y commiteado — importante de cara a producción y a trabajar en equipo.
 - Se instaló Prisma con la versión mayor **6.x** a propósito: `npm install prisma` sin fijar versión trajo la 7 (recién salida), que cambió la forma de configurar la conexión (adaptadores de driver + archivo de config nuevo) de una manera mucho más compleja de lo que hace falta para este proyecto. Reevaluar esto si en el futuro se quiere actualizar.
 - `src/lib/data/benefits.ts` se dejó sin tocar (sigue siendo un array estático): son 3 textos fijos sin necesidad de administración desde el panel.
+
+## Notas de la Fase 6
+
+- **JSON-LD**: `producto/[slug]/page.tsx` inyecta un `<script type="application/ld+json">` con schema.org `Product` (imagen, precio, disponibilidad según stock, y `aggregateRating` solo si `reviewCount > 0`, para no mandar una calificación sin reseñas reales).
+- **Sitemap + robots**: `src/app/sitemap.ts` genera `/sitemap.xml` con las páginas estáticas, categorías y productos activos (`getProducts()`/`getCategories()`, ya filtran por `active`). `src/app/robots.ts` permite todo salvo `/admin/`, `/api/` y las páginas de resultado del checkout (no tiene sentido indexarlas). Ambos usan `getSiteUrl()` (`src/lib/site.ts`), la misma función que ya usaba `checkout.ts` para las `back_urls` de Mercado Pago — antes estaba duplicada ahí.
+- **Metadata**: `metadataBase` en `src/app/layout.tsx` ahora sigue a `NEXTAUTH_URL` en vez de tener `http://localhost:3000` hardcodeado con un TODO — alcanza con actualizar esa variable al desplegar. Se sumaron `openGraph`/`twitter` por defecto (usa un banner existente de `public/images/banners/` como imagen social).
+- **`/admin` fuera de buscadores**: además del `Disallow` en `robots.txt` (que un bot no conforme podría ignorar), se agregó `metadata.robots = { index: false, follow: false }` en el layout del dashboard y en un layout nuevo para `/admin/login` (no se pudo poner directo en `admin/login/page.tsx` porque es un Client Component — Next no permite exportar `metadata` ahí).
+- **Rate limiting**: `src/lib/rate-limit.ts` es un limitador simple en memoria (un `Map`, sin dependencias). Se usa en `src/lib/auth.ts` (máx. 5 intentos de login cada 15 min por email, para frenar fuerza bruta contra el único usuario admin) y en el webhook de Mercado Pago (máx. 30 requests/min por IP). **Limitación conocida**: al ser en memoria, solo protege una instancia — en un despliegue serverless con múltiples instancias cada una tendría su propio conteo. Si eso importa en producción, reemplazar por un store compartido (Redis/Upstash).
+- **Headers de seguridad**: `next.config.ts` agrega `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy` y `Strict-Transport-Security` para todas las rutas. Se decidió **no** sumar un `Content-Security-Policy` estricto: la variante segura (con nonces) obliga a renderizar todas las páginas dinámicamente, perdiendo la generación estática — un retroceso justo en la fase de performance. Reevaluar si en algún momento se necesita.
+- **Ya cubierto de fases anteriores**: validación con Zod en todas las server actions (`checkout.ts`, `products.ts`, `categories.ts`), así que no hizo falta agregar nada ahí.
+- Pendiente manual (no requiere código): correr una auditoría de Lighthouse en Chrome DevTools sobre `/`, `/tienda` y `/producto/[slug]` para confirmar los puntajes de performance/SEO en la práctica.
 
 ## Notas de la Fase 5 (en curso)
 

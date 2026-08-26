@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -6,6 +7,8 @@ import { authOptions } from "@/lib/auth";
 import { SessionProvider } from "@/components/providers/SessionProvider";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { SignOutButton } from "@/components/admin/SignOutButton";
+
+export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 export default async function AdminDashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await getServerSession(authOptions);
