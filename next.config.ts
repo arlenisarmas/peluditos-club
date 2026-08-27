@@ -13,6 +13,19 @@ const nextConfig: NextConfig = {
       bodySizeLimit: "6mb",
     },
   },
+  async redirects() {
+    return [
+      {
+        // No va a haber cuentas de clientes — el ícono de usuario del header
+        // ahora es un acceso directo al login interno (/admin/login). Se
+        // deja este redirect (en vez de un 404) por si queda algún link o
+        // bookmark viejo apuntando a /cuenta.
+        source: "/cuenta",
+        destination: "/tienda",
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     return [
       {

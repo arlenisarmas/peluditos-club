@@ -112,8 +112,8 @@ export function Header() {
         <SearchForm className="ml-auto hidden max-w-xs flex-1 lg:block" />
 
         <Link
-          href="/cuenta"
-          aria-label="Cuenta"
+          href="/admin/login"
+          aria-label="Acceso administrador"
           className="hidden rounded-full p-2 hover:bg-brand-gray-light lg:inline-flex"
         >
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">

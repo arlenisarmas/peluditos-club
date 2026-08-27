@@ -45,8 +45,8 @@ const ITEMS = [
     ),
   },
   {
-    href: "/cuenta",
-    label: "Cuenta",
+    href: "/admin/login",
+    label: "Admin",
     icon: (
       <>
         <circle cx="12" cy="8" r="3.5" />
