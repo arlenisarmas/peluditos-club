@@ -4,7 +4,11 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { requireAdminSession } from "@/lib/auth";
 import { deleteImage, publicIdFromUrl, uploadImage } from "@/lib/cloudinary";
+
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5 MB
+const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/jpg", "image/png", "image/webp"]);
 
 const productSchema = z.object({
   name: z.string().min(2),
@@ -79,6 +83,7 @@ function revalidateStorefront(slug?: string) {
 }
 
 export async function createProduct(formData: FormData) {
+  await requireAdminSession();
   const data = parseForm(formData);
   const product = await prisma.product.create({
     data: { ...data, images: [], thumbnail: "" },
@@ -89,6 +94,7 @@ export async function createProduct(formData: FormData) {
 }
 
 export async function updateProduct(id: string, formData: FormData) {
+  await requireAdminSession();
   const data = parseForm(formData);
   const product = await prisma.product.update({ where: { id }, data });
   revalidateStorefront(product.slug);
@@ -97,6 +103,7 @@ export async function updateProduct(id: string, formData: FormData) {
 }
 
 export async function deleteProduct(id: string) {
+  await requireAdminSession();
   const product = await prisma.product.delete({ where: { id } });
   for (const image of product.images) {
     await deleteImageFile(image);
@@ -122,12 +129,26 @@ async function deleteImageFile(url: string) {
   });
 }
 
+function validateImageFile(file: FormDataEntryValue | null): file is File {
+  if (!(file instanceof File) || file.size === 0) {
+    throw new Error("Elegí un archivo de imagen.");
+  }
+  if (!ALLOWED_IMAGE_TYPES.has(file.type)) {
+    throw new Error("Formato no admitido. Usá JPG, PNG o WebP.");
+  }
+  if (file.size > MAX_IMAGE_SIZE) {
+    throw new Error("La imagen pesa demasiado. El máximo es 5 MB.");
+  }
+  return true;
+}
+
 export async function uploadProductImage(id: string, formData: FormData) {
+  await requireAdminSession();
   const file = formData.get("file");
-  if (!(file instanceof File) || file.size === 0) return;
+  validateImageFile(file);
 
   const product = await prisma.product.findUniqueOrThrow({ where: { id } });
-  const buffer = Buffer.from(await file.arrayBuffer());
+  const buffer = Buffer.from(await (file as File).arrayBuffer());
   const { secureUrl } = await uploadImage(buffer, `${product.slug}-${Date.now()}`);
 
   const images = [...product.images, secureUrl];
@@ -143,7 +164,31 @@ export async function uploadProductImage(id: string, formData: FormData) {
   revalidatePath(`/admin/productos/${id}`);
 }
 
+export async function replaceProductImage(id: string, oldImagePath: string, formData: FormData) {
+  await requireAdminSession();
+  const file = formData.get("file");
+  validateImageFile(file);
+
+  const product = await prisma.product.findUniqueOrThrow({ where: { id } });
+  const index = product.images.indexOf(oldImagePath);
+  if (index === -1) throw new Error("La imagen que querés reemplazar ya no existe.");
+
+  const buffer = Buffer.from(await (file as File).arrayBuffer());
+  const { secureUrl } = await uploadImage(buffer, `${product.slug}-${Date.now()}`);
+
+  const images = [...product.images];
+  images[index] = secureUrl;
+  const thumbnail = product.thumbnail === oldImagePath ? secureUrl : product.thumbnail;
+
+  await prisma.product.update({ where: { id }, data: { images, thumbnail } });
+  await deleteImageFile(oldImagePath);
+
+  revalidateStorefront(product.slug);
+  revalidatePath(`/admin/productos/${id}`);
+}
+
 export async function removeProductImage(id: string, imagePath: string) {
+  await requireAdminSession();
   const product = await prisma.product.findUniqueOrThrow({ where: { id } });
   const images = product.images.filter((img) => img !== imagePath);
   const thumbnail = product.thumbnail === imagePath ? images[0] || "" : product.thumbnail;
@@ -156,12 +201,14 @@ export async function removeProductImage(id: string, imagePath: string) {
 }
 
 export async function setProductThumbnail(id: string, imagePath: string) {
+  await requireAdminSession();
   const product = await prisma.product.update({ where: { id }, data: { thumbnail: imagePath } });
   revalidateStorefront(product.slug);
   revalidatePath(`/admin/productos/${id}`);
 }
 
 export async function reorderProductImage(id: string, imagePath: string, direction: "up" | "down") {
+  await requireAdminSession();
   const product = await prisma.product.findUniqueOrThrow({ where: { id } });
   const images = [...product.images];
   const index = images.indexOf(imagePath);

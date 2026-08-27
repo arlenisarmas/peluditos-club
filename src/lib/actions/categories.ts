@@ -3,6 +3,7 @@
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
+import { requireAdminSession } from "@/lib/auth";
 
 const categorySchema = z.object({
   name: z.string().min(2),
@@ -21,6 +22,7 @@ function revalidateStorefront() {
 }
 
 export async function createCategory(formData: FormData) {
+  await requireAdminSession();
   const data = categorySchema.parse(Object.fromEntries(formData.entries()));
   const count = await prisma.category.count();
   await prisma.category.create({ data: { ...data, order: count } });
@@ -28,12 +30,14 @@ export async function createCategory(formData: FormData) {
 }
 
 export async function updateCategory(id: string, formData: FormData) {
+  await requireAdminSession();
   const data = categorySchema.parse(Object.fromEntries(formData.entries()));
   await prisma.category.update({ where: { id }, data });
   revalidateStorefront();
 }
 
 export async function deleteCategory(id: string) {
+  await requireAdminSession();
   const productsInCategory = await prisma.product.count({ where: { categoryRef: { id } } });
   if (productsInCategory > 0) {
     throw new Error(
@@ -45,6 +49,7 @@ export async function deleteCategory(id: string) {
 }
 
 export async function reorderCategory(id: string, direction: "up" | "down") {
+  await requireAdminSession();
   const categories = await prisma.category.findMany({ orderBy: { order: "asc" } });
   const index = categories.findIndex((c) => c.id === id);
   if (index === -1) return;

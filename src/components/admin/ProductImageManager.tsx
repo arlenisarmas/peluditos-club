@@ -5,9 +5,56 @@ import { useRef, useState, useTransition } from "react";
 import {
   removeProductImage,
   reorderProductImage,
+  replaceProductImage,
   setProductThumbnail,
   uploadProductImage,
 } from "@/lib/actions/products";
+
+function ReplaceImageButton({
+  productId,
+  image,
+  disabled,
+  onError,
+}: {
+  productId: string;
+  image: string;
+  disabled: boolean;
+  onError: (message: string) => void;
+}) {
+  const [isPending, startTransition] = useTransition();
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    onError("");
+    const formData = new FormData();
+    formData.set("file", file);
+    startTransition(async () => {
+      try {
+        await replaceProductImage(productId, image, formData);
+      } catch (err) {
+        onError(err instanceof Error ? err.message : "No se pudo reemplazar la imagen.");
+      } finally {
+        if (inputRef.current) inputRef.current.value = "";
+      }
+    });
+  }
+
+  return (
+    <label className="cursor-pointer text-brand-black hover:text-brand-yellow">
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        className="hidden"
+        disabled={disabled || isPending}
+        onChange={handleChange}
+      />
+      {isPending ? "Reemplazando..." : "Reemplazar"}
+    </label>
+  );
+}
 
 export function ProductImageManager({
   productId,
@@ -20,7 +67,24 @@ export function ProductImageManager({
 }) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
+  const previewUrlRef = useRef<string | null>(null);
+
+  function clearPreview() {
+    if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+    previewUrlRef.current = null;
+    setPreview(null);
+  }
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    clearPreview();
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    previewUrlRef.current = url;
+    setPreview(url);
+  }
 
   function handleUpload(formData: FormData) {
     setError(null);
@@ -28,6 +92,7 @@ export function ProductImageManager({
       try {
         await uploadProductImage(productId, formData);
         formRef.current?.reset();
+        clearPreview();
       } catch (err) {
         setError(err instanceof Error ? err.message : "No se pudo subir la imagen.");
       }
@@ -56,6 +121,7 @@ export function ProductImageManager({
               >
                 Usar como principal
               </button>
+              <ReplaceImageButton productId={productId} image={image} disabled={isPending} onError={setError} />
             </div>
             <div className="mt-1 flex items-center justify-between">
               <div className="flex gap-1">
@@ -96,7 +162,19 @@ export function ProductImageManager({
         action={handleUpload}
         className="mt-4 flex items-center gap-3 rounded-xl border border-dashed border-black/20 p-4"
       >
-        <input type="file" name="file" accept="image/*" required className="text-sm" />
+        {preview && (
+          <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-brand-gray-light">
+            <Image src={preview} alt="" fill className="object-contain" unoptimized />
+          </div>
+        )}
+        <input
+          type="file"
+          name="file"
+          accept="image/jpeg,image/png,image/webp"
+          required
+          onChange={handleFileChange}
+          className="text-sm"
+        />
         <button
           type="submit"
           disabled={isPending}
@@ -110,7 +188,9 @@ export function ProductImageManager({
           {error}
         </p>
       )}
-      <p className="mt-2 text-xs text-brand-gray">Las imágenes se suben a Cloudinary.</p>
+      <p className="mt-2 text-xs text-brand-gray">
+        Las imágenes se suben a Cloudinary. JPG, PNG o WebP, hasta 5 MB.
+      </p>
     </div>
   );
 }

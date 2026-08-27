@@ -1,4 +1,5 @@
 import type { NextAuthOptions } from "next-auth";
+import { getServerSession } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
@@ -47,3 +48,15 @@ export const authOptions: NextAuthOptions = {
     },
   },
 };
+
+// Las Server Actions del admin (src/lib/actions/*) son, debajo, un endpoint
+// HTTP más — el proxy y el layout del dashboard solo protegen el HTML de la
+// página, no bloquean una llamada directa a la action. Por eso cada action
+// que crea, edita o borra algo empieza llamando a esto.
+export async function requireAdminSession() {
+  const session = await getServerSession(authOptions);
+  if (!session) {
+    throw new Error("No autorizado.");
+  }
+  return session;
+}
