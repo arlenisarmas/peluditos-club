@@ -44,6 +44,16 @@ const ITEMS = [
       />
     ),
   },
+  {
+    href: "/cuenta",
+    label: "Cuenta",
+    icon: (
+      <>
+        <circle cx="12" cy="8" r="3.5" />
+        <path d="M5 20c0-3.9 3.1-6.5 7-6.5s7 2.6 7 6.5" strokeLinecap="round" />
+      </>
+    ),
+  },
 ];
 
 export function MobileNav() {
