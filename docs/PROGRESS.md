@@ -8,7 +8,7 @@ Ver el plan completo y el contexto de cada fase en la conversación original / `
 - [ ] **Fase 4 — Carrito persistente + Checkout + Mercado Pago.** Carrito en DB para usuarios logueados, Checkout Pro, webhook de confirmación de pago.
 - [x] **Fase 5 — Cloudinary.** Migrar a Cloudinary las imágenes que se suben desde el admin (los assets de marca/stock de `public/images` quedan como están: ya funcionan bien commiteados a git). Cuenta creada y credenciales cargadas en `.env`.
 - [x] **Fase 6 — SEO + Performance + Seguridad.** JSON-LD por producto, sitemap + robots dinámicos, metadata (Open Graph/Twitter), headers de seguridad, rate limiting en login y webhook. Sin dependencias externas pendientes.
-- [ ] **Fase 7 — Empaquetado para GitHub.** Revisión final de README, licencias de assets, `.env.example` completo, instrucciones de deploy.
+- [x] **Fase 7 — Empaquetado para GitHub.** README definitivo, licencias de assets documentadas, `.env.example` completo, auditoría de seguridad, instrucciones de deploy. Lo único que queda fuera a propósito: activar Mercado Pago en producción (Fase 4).
 
 ## Rebranding: Peluditos Club → Che Peludos
 
@@ -19,6 +19,66 @@ Ver el plan completo y el contexto de cada fase en la conversación original / `
   - El nombre de la base de datos (`peluditos_club` en `DATABASE_URL`) — renombrarlo implica una operación sobre la base real (`ALTER DATABASE` o recrearla), no es solo texto.
   - Nombres que sí se actualizaron por ser 100% seguros de cambiar (no tocan rutas, migraciones ni integraciones): `package.json`/`package-lock.json` (`name`), la carpeta de Cloudinary (`che-peludos/products`), la key de `localStorage` del carrito y el `statement_descriptor` que ve el cliente en el resumen de su tarjeta al pagar con Mercado Pago.
 - Cloudinary: se confirmó que la integración está centralizada en un solo lugar (`src/lib/cloudinary.ts`), sin duplicados, sin secretos en componentes ni en el frontend — todo sale de `process.env`. Se cargaron las credenciales reales de la cuenta ya creada directamente en `.env` (nunca en `.env.example` ni en el código).
+
+## Consolidación final: UI, auditoría de seguridad y cierre de la Fase 7
+
+Revisión hecha sobre el estado real del código (no se reimplementó nada de lo ya terminado). Confirmado leyendo el código: Fases 1, 2, 3, 5 y 6 están completas tal como dice el checklist de arriba — RBAC con `requirePermission`/`requirePagePermission` en las 10 actions de productos/categorías/inventario/usuarios y en cada página del dashboard, Cloudinary centralizado en `src/lib/cloudinary.ts`, SEO/headers de la Fase 6 en `next.config.ts` y `src/app/layout.tsx`.
+
+### Correcciones de UI
+
+- **Ícono de cuenta oculto** en `Header.tsx` (desktop) y `MobileNav.tsx` (mobile/tablet) — `/cuenta` sigue existiendo y sigue mostrando "Tu cuenta, muy pronto"; el login de empleados sigue siendo exclusivamente `/admin/login`, sin conectarlos.
+- **Flechas de categoría**: antes eran siempre círculo blanco + flecha negra sin importar la categoría. Ahora el color del círculo sale de `src/lib/category-accent.ts` (mapa centralizado slug → clase de Tailwind, con default si aparece una categoría nueva sin mapear) y la flecha es blanca. Se extrajo `src/components/home/CategoryCard.tsx` como componente único reutilizable (antes ya era un solo `.map()`, no estaba duplicado 4 veces, pero ahora el color y el markup viven en un solo lugar). Colores: Accesorios y Comederos `bg-brand-blue` (#43aeef), Ropa `bg-brand-yellow` (#ffc107), Juguetes `bg-brand-coral` (#ff4b3e) — los tres ya existían como tokens de marca en `globals.css`, no hizo falta inventar hex nuevos.
+
+### Auditoría de seguridad
+
+**Corregido ahora:**
+- **Límite real de subida de imágenes**: Next.js limita el body de una Server Action a 1MB por defecto — *menos* que el límite de 5MB que ya validaba `uploadProductImage`/`replaceProductImage`. En la práctica, cualquier imagen de entre 1 y 5MB fallaba en el framework antes de llegar a nuestra validación (con un error genérico, no el mensaje claro que escribimos). Se corrigió con `experimental.serverActions.bodySizeLimit: "6mb"` en `next.config.ts`.
+- **JSON-LD sin escapar**: `JSON.stringify` no escapa `<`, así que si un nombre o descripción de producto alguna vez incluyera literalmente `</script>`, cortaría el tag antes de tiempo (un vector de XSS poco probable pero real). Se agregó un `.replace(/</g, "\\u003c")` en `producto/[slug]/page.tsx`.
+- **GitHub**: se activaron *Dependabot alerts* y *Dependabot security updates* (estaban apagados; *secret scanning* y *push protection* ya estaban activos solos por ser repo público). Se agregó `.github/dependabot.yml` (chequeo semanal de `npm`, ignora saltos de versión mayor a propósito — ver Fase 2 sobre por qué Prisma se fijó en 6.x).
+
+**Ya estaba bien, verificado sin cambios:**
+- Hashing de contraseñas: bcrypt costo 12, en `auth.ts` y todas las actions de usuarios.
+- Cookies de NextAuth: `HttpOnly` y `SameSite=Lax` siempre (son el default de la librería, no configurable "mal"); `Secure` se activa solo automáticamente cuando `NEXTAUTH_URL` empieza con `https://` — **en producción hay que asegurarse de que esa variable use el dominio real con https**, si no, las cookies no llevan `Secure`.
+- Rate limit de login (5 intentos/15 min por email) y mensaje siempre genérico ("email o contraseña incorrectos") — no se puede distinguir si el email existe, si la contraseña está mal, o si está rate-limiteado.
+- RBAC: todas las mutaciones validan sesión + usuario activo + permiso del lado del servidor (`src/lib/authz.ts`); nunca se confía en un botón oculto ni en un rol mandado desde el cliente.
+- Headers de seguridad (`next.config.ts`): sin duplicados ni contradicciones. Se decidió no sumar CSP estricta (ver Fase 6) porque obliga a renderizado dinámico en todas las páginas.
+- CSRF: Next.js protege las Server Actions solas comparando `Origin` contra `Host` (rechaza si no coinciden) — no hace falta un mecanismo redundante. El login usa el `csrfToken` propio de NextAuth (verificado a mano contra `/api/auth/callback/credentials`).
+- Prisma: cero SQL crudo en todo el proyecto (`$queryRaw`/`$executeRaw` no se usan) — todas las queries están parametrizadas por el ORM. `DATABASE_URL` solo se lee server-side, nunca con prefijo `NEXT_PUBLIC_`.
+- Cloudinary: subida y borrado exigen `requirePermission("products:write")`; tipo (JPG/PNG/WebP) y tamaño (5MB, ahora sí aplicado de punta a punta) se validan en el servidor; el `API_SECRET` solo se lee en `src/lib/cloudinary.ts` (server-only), nunca llega al navegador.
+- Secretos: se revisó el historial completo de git (no solo el estado actual) — `.env` nunca se commiteó, y no aparece ningún secreto hardcodeado en ningún archivo trackeado.
+
+**Encontrado y documentado, sin corregir ahora (no bloquean el uso actual):**
+- **Rate limiting en memoria no alcanza para producción serverless.** `src/lib/rate-limit.ts` es un `Map` en memoria de un solo proceso — funciona bien en `npm run dev` o un servidor tradicional siempre prendido, pero en Vercel cada invocación puede caer en una instancia distinta (o una instancia "fría" que arranca en cero), así que el límite de 5 intentos/15 min se puede esquivar en la práctica. **Antes de producción real**, cambiar `isRateLimited` para usar un store compartido — la opción más simple es **Upstash Redis** (tiene SDK oficial `@upstash/ratelimit` + `@upstash/redis`, plan gratuito, y Vercel lo integra con un click vía Marketplace). No se agregó ahora para no sumar una cuenta/dependencia externa sin necesidad mientras el sitio no está en producción.
+- **Sin 2FA/TOTP para SUPER_ADMIN.** Es una adición razonable (biblioteca tipo `otplib` + un campo `totpSecret` en `User` + un paso extra en el login) pero es trabajo real aparte, no algo para sumar de paso en esta consolidación. **Recomendado antes de producción**, sobre todo si va a haber más de un SUPER_ADMIN.
+- **Webhook de Mercado Pago sin verificar firma.** `MP_WEBHOOK_SECRET` está en `.env.example` pero nunca se usa en el código — el webhook (`src/app/api/webhooks/mercadopago/route.ts`) no valida el header `x-signature` que manda Mercado Pago. El riesgo práctico hoy es bajo (haría falta adivinar un `payment_id` real de MP cuyo `external_reference` coincida con un pedido nuestro), pero es lo correcto de implementar cuando se retome la Fase 4 — **no se tocó ahora porque Mercado Pago queda expresamente pendiente**.
+- **`npm audit`**: 3 vulnerabilidades "high" en `deepmerge-ts` (vía `@prisma/config`, dependencia de la CLI `prisma`). **No afecta el sitio en producción**: `@prisma/client` (lo que corre en el servidor deployado) no depende de ese paquete — solo lo usa la herramienta de línea de comandos (`migrate`, `generate`, `seed`), y el arreglo automático (`npm audit fix --force`) bajaría `prisma` a la 6.12, deshaciendo la decisión ya tomada en la Fase 2 de fijar la versión mayor. Se deja así y se recomienda revisar de nuevo cuando `@prisma/config` publique una versión con `deepmerge-ts` parcheado.
+- **Duración de sesión**: 30 días (default de NextAuth, no se fijó explícito). Es razonable para un panel chico, pero para un admin conviene evaluar acortarla (por ejemplo 7 días) antes de producción.
+
+### DDoS y protección perimetral (para cuando se despliegue)
+
+Con Vercel + dominio propio (`chepeludos.shop`), la recomendación práctica (sin sumar infraestructura compleja):
+
+1. **Vercel ya trae protección de DDoS de capa de red/aplicación incluida** en todos los planes (absorbe ataques volumétricos automáticamente, sin configuración). Alcanza para el volumen de tráfico esperado de esta tienda.
+2. **Sumar Cloudflare adelante (DNS + proxy) recién si aparece scraping agresivo o abuso real** — no hace falta desde el día uno. Cuando se justifique: apuntar el dominio a Cloudflare en modo proxy (nube naranja), activar el WAF gratuito y un rate limit de borde para rutas sensibles (`/admin/login`, `/api/webhooks/mercadopago`, `/admin/forgot-password`), y modo "Under Attack" como botón de pánico puntual.
+3. Mientras tanto, el rate limiting de aplicación (login, forgot-password, webhook — ver arriba) es la primera línea de defensa real contra abuso dirigido, no volumétrico.
+
+### Backups y recuperación (estrategia mínima, para configurar al desplegar)
+
+- **PostgreSQL**: si se aloja en un proveedor administrado (Neon, Supabase, Railway — cualquiera sirve, `DATABASE_URL` es lo único que cambia), todos ofrecen backups automáticos diarios con algunos días de retención en el plan gratuito/inicial. Confirmar la retención del proveedor elegido y, si el negocio lo justifica más adelante, subir de plan para retención más larga o point-in-time recovery. Restaurar es específico del proveedor (típicamente un botón en su panel).
+- **Cloudinary**: no se necesita backup aparte mientras las URLs sigan en Postgres (que sí tiene su propio backup) — el activo real vive en Cloudinary y Postgres solo guarda la referencia. Cuidado al borrar: `deleteImageFile` (en `src/lib/actions/products.ts`) ya evita borrar assets que no sean de `res.cloudinary.com` (los del catálogo original en `public/images/`), así que un borrado de producto no puede afectar assets compartidos por accidente.
+- **GitHub**: el código ya está versionado (es la fuente de verdad de todo). Cuando el sitio pase a producción, taguear ese commit (`git tag v1.0.0`) y usar releases de GitHub para versiones importantes en adelante — todavía no se hizo porque no hay un primer despliegue real.
+
+### Assets de `/public` — origen y licencia
+
+| Carpeta | Contenido | Origen |
+|---|---|---|
+| `brand/logo-mark.png` | Isotipo de la marca | Propio |
+| `dogs/*.png` | Fotos de perros usadas en todo el sitio | Del usuario (procesadas con `scripts/process-assets.mjs` para quitar el fondo) — licencia según lo que haya provisto el usuario, no verificable por este asistente |
+| `banners/*.jpg` | Banners promocionales del home | Del usuario, mismo origen que `dogs/` |
+| `icons/icon-love.png`, `icon-secure.png`, `icon-shipping.png` | Íconos decorativos | Del usuario (Fase 1: "exportados de WhatsApp") — origen/licencia original no verificable |
+| `icons/payment-strip.png` | Logos de Visa/Mastercard/Amex/PayPal | Marcas registradas de terceros, mostradas para indicar medios de pago aceptados (uso habitual en e-commerce); no hay licencia propia sobre estos logos — si se requiere una revisión legal estricta antes de producción, confirmar que el uso respeta las guías de marca de cada red |
+
+Ningún asset tiene una licencia inventada acá — donde no se pudo verificar el origen exacto, queda anotado así para reemplazar si hace falta antes de salir a producción.
 
 ## Notas de la Fase 1
 

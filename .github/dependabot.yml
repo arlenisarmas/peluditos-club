@@ -1,0 +1,14 @@
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    # Los majors (Next, Prisma, React, etc.) se evalúan a mano — ya hubo una
+    # decisión deliberada de quedarse en Prisma 6.x (ver docs/PROGRESS.md,
+    # notas de la Fase 2), así que no queremos que Dependabot proponga saltos
+    # de versión mayor solos.
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
