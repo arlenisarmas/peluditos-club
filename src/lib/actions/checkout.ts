@@ -94,7 +94,7 @@ export async function createCheckout(
           failure: `${siteUrl}/checkout/error?order=${order.id}`,
         },
         auto_return: "approved",
-        statement_descriptor: "PELUDITOS CLUB",
+        statement_descriptor: "CHE PELUDOS",
       },
     });
 

@@ -1,8 +1,8 @@
-# Peluditos Club
+# Che Peludos
 
 Tienda online de productos para mascotas. "Todo para consentir a tu peludito."
 
-Este repo se construye por fases — ver el estado actual en [`docs/PROGRESS.md`](docs/PROGRESS.md). Completas: **Fase 1** (tienda frontend), **Fase 2** (base de datos real), **Fase 3** (autenticación + panel admin) y **Fase 6** (SEO + performance + seguridad). En curso: **Fase 4** (checkout + Mercado Pago) y **Fase 5** (Cloudinary) — el código de ambas está listo, falta cargar credenciales reales (ver `.env.example`).
+Este repo se construye por fases — ver el estado actual en [`docs/PROGRESS.md`](docs/PROGRESS.md). Completas: **Fase 1** (tienda frontend), **Fase 2** (base de datos real), **Fase 3** (autenticación + panel admin), **Fase 5** (Cloudinary) y **Fase 6** (SEO + performance + seguridad). En curso: **Fase 4** (checkout + Mercado Pago) — el código está listo, falta cargar credenciales reales de Mercado Pago (ver `.env.example`).
 
 ## Stack
 
@@ -60,7 +60,7 @@ DATABASE_URL="postgresql://postgres:postgres@localhost:5432/peluditos_club?schem
 - Login simple de email + contraseña (`src/lib/auth.ts`, proveedor Credentials de NextAuth, sesión JWT). No usa redes sociales para no depender de otra cuenta externa.
 - Rutas protegidas en dos capas: `src/proxy.ts` (chequeo rápido) + un chequeo real de sesión en `src/app/admin/(dashboard)/layout.tsx` (así lo recomienda Next.js: el proxy no debe ser la única barrera de auth).
 - **Productos**: crear, editar, borrar, activar/ocultar, destacar, precio/descuento, stock, categoría, talles y colores.
-- **Imágenes de producto**: subida múltiple, elegir imagen principal, borrar, reordenar. Se suben a Cloudinary (`src/lib/cloudinary.ts`) — necesita `CLOUDINARY_CLOUD_NAME`/`CLOUDINARY_API_KEY`/`CLOUDINARY_API_SECRET` en `.env` (ver `.env.example`); sin esas credenciales, subir una imagen muestra un error explicando qué falta.
+- **Imágenes de producto**: subida múltiple, elegir imagen principal, borrar, reordenar. Se suben a Cloudinary (`src/lib/cloudinary.ts`), configuración centralizada en un solo lugar vía `process.env` (`CLOUDINARY_CLOUD_NAME`/`CLOUDINARY_API_KEY`/`CLOUDINARY_API_SECRET` en `.env`); sin esas credenciales, subir una imagen muestra un error explicando qué falta.
 - **Categorías**: crear, editar, borrar (si no tienen productos), reordenar.
 - **Inventario**: agotados / stock bajo (≤10) / stock normal.
 - **Pedidos**: pantalla lista pero vacía hasta la Fase 4 (necesita el modelo de pedidos que trae Mercado Pago).
@@ -109,15 +109,19 @@ docs/
 
 - **JSON-LD**: cada página de producto (`/producto/[slug]`) incluye datos estructurados `Product` (schema.org) con precio, disponibilidad y rating.
 - **Sitemap y robots**: `/sitemap.xml` (dinámico, incluye productos y categorías activos) y `/robots.txt` (bloquea `/admin/`, `/api/` y las páginas de resultado del checkout).
-- **Metadata**: Open Graph/Twitter por defecto en `src/app/layout.tsx`; `metadataBase` sigue a `NEXTAUTH_URL`, así que no hace falta tocar código al desplegar.
+- **Metadata**: Open Graph/Twitter por defecto en `src/app/layout.tsx`, `alternates.canonical` en las páginas públicas principales; `metadataBase` sigue a `NEXT_PUBLIC_SITE_URL` (dominio de producción), así que no hace falta tocar código al desplegar.
 - **Seguridad**: headers estándar (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, `Strict-Transport-Security`) en `next.config.ts`; rate limiting en memoria (`src/lib/rate-limit.ts`) para el login del admin y el webhook de Mercado Pago; validación con Zod en todas las server actions.
 
-## Próximos pasos (fases 4, 5 y 7)
+## Marca y contacto
 
-Fases 4 y 5 arrancan de verdad cuando haya credenciales/cuentas disponibles para esa pieza (el código ya está listo):
+- **Nombre**: Che Peludos. **Email**: `chepeludos@gmail.com` (footer, contacto, ayuda). **Redes**: [Instagram](https://www.instagram.com/chepeludos) y [TikTok](https://www.tiktok.com/@chepeludos) (`src/lib/social.ts`) — no se muestran Facebook/YouTube/X porque todavía no hay cuenta real.
+- **Dominio de producción**: `chepeludos.shop`, vía `NEXT_PUBLIC_SITE_URL` (ver `.env.example`). En local podés dejarla sin definir.
 
-4. **Carrito persistente + checkout + Mercado Pago**: Checkout Pro y webhook de confirmación de pago. Falta `MP_ACCESS_TOKEN` real y, para producción, un dominio público (el webhook no funciona contra `localhost`).
-5. **Cloudinary**: las imágenes que se suben desde el admin van a Cloudinary en vez del disco local (necesario para producción — un hosting serverless no persiste archivos escritos en runtime). Falta crear la cuenta gratis y cargar las credenciales. Los assets de marca/stock (`public/images/`) quedan como están: ya están commiteados a git y Next.js los optimiza solo.
+## Próximos pasos (fase 4 y 7)
+
+La Fase 4 arranca de verdad cuando haya credenciales de Mercado Pago (el código ya está listo):
+
+4. **Carrito persistente + checkout + Mercado Pago**: Checkout Pro y webhook de confirmación de pago. Falta `MP_ACCESS_TOKEN` real y, para producción, el dominio público ya configurado (el webhook no funciona contra `localhost`).
 7. **Empaquetado final para GitHub**: README y `.env.example` definitivos, instrucciones de deploy.
 
 Ver `.env.example` para las variables de entorno que va a necesitar cada fase.

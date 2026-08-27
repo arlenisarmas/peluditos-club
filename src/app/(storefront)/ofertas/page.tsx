@@ -4,8 +4,9 @@ import { getProducts } from "@/lib/data/products";
 import { ProductGrid } from "@/components/products/ProductGrid";
 
 export const metadata: Metadata = {
-  title: "Ofertas | Peluditos Club",
+  title: "Ofertas | Che Peludos",
   description: "Descuentos en productos seleccionados para tu peludito.",
+  alternates: { canonical: "/ofertas" },
 };
 
 export default async function OfertasPage() {

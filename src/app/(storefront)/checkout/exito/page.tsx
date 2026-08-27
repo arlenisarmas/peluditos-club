@@ -5,7 +5,7 @@ import { syncPaymentById } from "@/lib/payment-sync";
 import { ButtonLink } from "@/components/ui/Button";
 import { ClearCartOnMount } from "@/components/cart/ClearCartOnMount";
 
-export const metadata: Metadata = { title: "¡Gracias por tu compra! | Peluditos Club" };
+export const metadata: Metadata = { title: "¡Gracias por tu compra! | Che Peludos" };
 
 interface CheckoutExitoPageProps {
   searchParams: Promise<{ order?: string; payment_id?: string }>;

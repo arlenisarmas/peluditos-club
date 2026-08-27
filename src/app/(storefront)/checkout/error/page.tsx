@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { syncPaymentById } from "@/lib/payment-sync";
 import { ButtonLink } from "@/components/ui/Button";
 
-export const metadata: Metadata = { title: "El pago no pudo procesarse | Peluditos Club" };
+export const metadata: Metadata = { title: "El pago no pudo procesarse | Che Peludos" };
 
 interface CheckoutErrorPageProps {
   searchParams: Promise<{ order?: string; payment_id?: string }>;

@@ -16,17 +16,18 @@ const pacifico = Pacifico({
   weight: "400",
 });
 
-const title = "Peluditos Club — Todo para consentir a tu peludito";
+const title = "Che Peludos — Todo para consentir a tu peludito";
 const description =
   "Tienda online de productos para mascotas: accesorios, ropa, juguetes y comederos. Envío gratis en compras superiores a $699.";
 
 export const metadata: Metadata = {
-  // Sigue a NEXTAUTH_URL (ver .env), así que alcanza con actualizar esa
-  // variable al desplegar para que las URLs absolutas de Open Graph/Twitter
-  // apunten al dominio real.
+  // Sigue a NEXT_PUBLIC_SITE_URL (ver .env.example), así que alcanza con
+  // configurar esa variable al desplegar para que las URLs absolutas de Open
+  // Graph/Twitter y las canonical apunten al dominio real.
   metadataBase: new URL(getSiteUrl()),
   title,
   description,
+  alternates: { canonical: "/" },
   openGraph: {
     title,
     description,

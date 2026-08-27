@@ -19,7 +19,7 @@ export async function uploadImage(buffer: Buffer, publicId: string) {
   const client = configure();
   return new Promise<{ secureUrl: string; publicId: string }>((resolve, reject) => {
     const stream = client.uploader.upload_stream(
-      { folder: "peluditos-club/products", public_id: publicId, overwrite: true },
+      { folder: "che-peludos/products", public_id: publicId, overwrite: true },
       (error, result) => {
         if (error || !result) {
           reject(error ?? new Error("Cloudinary no devolvió resultado."));

@@ -16,10 +16,11 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: ProductoPageProps): Promise<Metadata> {
   const { slug } = await params;
   const product = await getProductBySlug(slug);
-  if (!product) return { title: "Producto no encontrado | Peluditos Club" };
+  if (!product) return { title: "Producto no encontrado | Che Peludos" };
   return {
-    title: `${product.name} | Peluditos Club`,
+    title: `${product.name} | Che Peludos`,
     description: product.shortDescription,
+    alternates: { canonical: `/producto/${slug}` },
     openGraph: {
       title: product.name,
       description: product.shortDescription,

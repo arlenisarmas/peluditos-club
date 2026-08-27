@@ -21,7 +21,8 @@ export async function generateMetadata({ params }: CategoriaPageProps): Promise<
   const { slug } = await params;
   const category = await getCategoryBySlug(slug);
   return {
-    title: category ? `${category.name} | Peluditos Club` : "Categoría | Peluditos Club",
+    title: category ? `${category.name} | Che Peludos` : "Categoría | Che Peludos",
+    alternates: { canonical: `/categoria/${slug}` },
   };
 }
 

@@ -37,10 +37,10 @@ function LoginForm() {
     <div className="flex min-h-screen items-center justify-center bg-brand-gray-light px-4">
       <div className="w-full max-w-sm rounded-2xl bg-white p-8 shadow-sm">
         <div className="flex justify-center">
-          <Image src="/images/brand/logo-mark.png" alt="Peluditos Club" width={48} height={48} />
+          <Image src="/images/brand/logo-mark.png" alt="Che Peludos" width={48} height={48} />
         </div>
         <h1 className="mt-4 text-center text-xl font-bold">Panel de administración</h1>
-        <p className="mt-1 text-center text-sm text-brand-gray">Peluditos Club</p>
+        <p className="mt-1 text-center text-sm text-brand-gray">Che Peludos</p>
 
         <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
           <div>

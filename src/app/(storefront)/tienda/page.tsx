@@ -7,8 +7,9 @@ import { ProductGrid } from "@/components/products/ProductGrid";
 import { ProductFilters } from "@/components/products/ProductFilters";
 
 export const metadata: Metadata = {
-  title: "Tienda | Peluditos Club",
+  title: "Tienda | Che Peludos",
   description: "Explorá todos los productos para tu mascota: accesorios, ropa, juguetes y comederos.",
+  alternates: { canonical: "/tienda" },
 };
 
 interface TiendaPageProps {

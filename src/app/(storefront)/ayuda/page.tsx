@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Ayuda | Peluditos Club",
+  title: "Ayuda | Che Peludos",
   description: "Envíos, cambios y devoluciones, y preguntas frecuentes.",
+  alternates: { canonical: "/ayuda" },
 };
 
 const FAQS = [
@@ -52,6 +53,14 @@ export default function AyudaPage() {
           ))}
         </dl>
       </section>
+
+      <p className="mt-10 text-sm text-brand-gray">
+        ¿No encontraste tu respuesta? Escribinos a{" "}
+        <a href="mailto:chepeludos@gmail.com" className="font-semibold text-brand-black hover:text-brand-yellow">
+          chepeludos@gmail.com
+        </a>
+        .
+      </p>
     </div>
   );
 }

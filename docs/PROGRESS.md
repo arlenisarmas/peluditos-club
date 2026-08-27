@@ -1,4 +1,4 @@
-# Progreso — Peluditos Club
+# Progreso — Che Peludos
 
 Ver el plan completo y el contexto de cada fase en la conversación original / `docs/design-reference/` para los mockups de referencia.
 
@@ -6,9 +6,19 @@ Ver el plan completo y el contexto de cada fase en la conversación original / `
 - [x] **Fase 2 — Backend real.** PostgreSQL local + Prisma. `src/lib/data/products.ts` y `categories.ts` ahora consultan la base real; el catálogo de la Fase 1 se movió a `prisma/seed-data.ts` y se sembró con `prisma/seed.ts`. Migraciones versionadas en `prisma/migrations/`.
 - [x] **Fase 3 — Autenticación + Panel admin.** NextAuth (Credentials + JWT) protegiendo `/admin` en dos capas (`src/proxy.ts` + chequeo de sesión en el layout). CRUD completo de productos (con imágenes: subir/borrar/reordenar/elegir principal) y categorías (con reorden), pantalla de inventario, y un stub de pedidos que se activa en la Fase 4.
 - [ ] **Fase 4 — Carrito persistente + Checkout + Mercado Pago.** Carrito en DB para usuarios logueados, Checkout Pro, webhook de confirmación de pago.
-- [ ] **Fase 5 — Cloudinary.** Migrar a Cloudinary las imágenes que se suben desde el admin (los assets de marca/stock de `public/images` quedan como están: ya funcionan bien commiteados a git).
+- [x] **Fase 5 — Cloudinary.** Migrar a Cloudinary las imágenes que se suben desde el admin (los assets de marca/stock de `public/images` quedan como están: ya funcionan bien commiteados a git). Cuenta creada y credenciales cargadas en `.env`.
 - [x] **Fase 6 — SEO + Performance + Seguridad.** JSON-LD por producto, sitemap + robots dinámicos, metadata (Open Graph/Twitter), headers de seguridad, rate limiting en login y webhook. Sin dependencias externas pendientes.
 - [ ] **Fase 7 — Empaquetado para GitHub.** Revisión final de README, licencias de assets, `.env.example` completo, instrucciones de deploy.
+
+## Rebranding: Peluditos Club → Che Peludos
+
+- Cambio de marca aplicado en todo lo visible: metadata (`title`/`description`/OG/Twitter), JSON-LD, sitemap/robots (vía `getSiteUrl()`), textos de header/footer/nosotros/checkout/admin, README y este archivo.
+- Correo de contacto: `chepeludos@gmail.com` (footer, contacto, ayuda). Redes: Instagram y TikTok reales (`src/lib/social.ts`), con íconos propios (`src/components/ui/SocialIcons.tsx`, mismo criterio que `Decorations.tsx`: SVG a mano, sin librería externa) a través de un componente reutilizable (`src/components/ui/SocialLinks.tsx`) usado en footer, `/nosotros` y `/contacto`. Facebook/YouTube/X se sacaron del footer (antes eran parte de una imagen fija `social-strip.png`, ahora borrada) porque no hay cuenta real todavía — no se muestran links placeholder.
+- Dominio de producción: `chepeludos.shop`, vía `NEXT_PUBLIC_SITE_URL` (`.env.example`). `src/lib/site.ts` ahora prioriza esa variable sobre `NEXTAUTH_URL` (que se deja como estaba, la sigue necesitando NextAuth para armar sus propias URLs de callback). Se agregaron `alternates.canonical` en las páginas públicas principales.
+- **Lo que a propósito no se tocó** (nombres técnicos internos, no rompen nada visible pero cambiarlos sin necesidad es más riesgo que beneficio):
+  - El nombre de la base de datos (`peluditos_club` en `DATABASE_URL`) — renombrarlo implica una operación sobre la base real (`ALTER DATABASE` o recrearla), no es solo texto.
+  - Nombres que sí se actualizaron por ser 100% seguros de cambiar (no tocan rutas, migraciones ni integraciones): `package.json`/`package-lock.json` (`name`), la carpeta de Cloudinary (`che-peludos/products`), la key de `localStorage` del carrito y el `statement_descriptor` que ve el cliente en el resumen de su tarjeta al pagar con Mercado Pago.
+- Cloudinary: se confirmó que la integración está centralizada en un solo lugar (`src/lib/cloudinary.ts`), sin duplicados, sin secretos en componentes ni en el frontend — todo sale de `process.env`. Se cargaron las credenciales reales de la cuenta ya creada directamente en `.env` (nunca en `.env.example` ni en el código).
 
 ## Notas de la Fase 1
 
@@ -36,13 +46,13 @@ Ver el plan completo y el contexto de cada fase en la conversación original / `
 - **Ya cubierto de fases anteriores**: validación con Zod en todas las server actions (`checkout.ts`, `products.ts`, `categories.ts`), así que no hizo falta agregar nada ahí.
 - Pendiente manual (no requiere código): correr una auditoría de Lighthouse en Chrome DevTools sobre `/`, `/tienda` y `/producto/[slug]` para confirmar los puntajes de performance/SEO en la práctica.
 
-## Notas de la Fase 5 (en curso)
+## Notas de la Fase 5
 
 - Alcance acotado a propósito: solo se migran a Cloudinary las imágenes que se suben desde el panel admin (`uploadProductImage` en `src/lib/actions/products.ts`, vía `src/lib/cloudinary.ts`). Los assets de marca/stock en `public/images/{dogs,icons,brand,banners}` **no** se tocan — ya están commiteados a git y Next.js los optimiza solo con su Image Optimization API; Cloudinary no suma nada ahí.
 - El problema real que resuelve esta fase: las imágenes subidas desde el admin se guardaban en disco local (`public/images/products/`), que funciona en desarrollo pero se pierde en cualquier hosting serverless (Vercel y similares no persisten archivos escritos en runtime entre despliegues/instancias).
 - Al borrar una imagen o un producto, solo se intenta borrar en Cloudinary si la URL es de `res.cloudinary.com` (`publicIdFromUrl` en `src/lib/cloudinary.ts`) — las imágenes viejas sembradas por `prisma/seed-data.ts` (fotos de `public/images/dogs/...` usadas como placeholder de catálogo) se ignoran, igual que antes con el disco local.
 - `next.config.ts` permite `res.cloudinary.com` en `images.remotePatterns` para que `next/image` pueda optimizar esas URLs.
-- Pendiente para cerrar la fase: crear una cuenta gratis en Cloudinary y cargar `CLOUDINARY_CLOUD_NAME`/`CLOUDINARY_API_KEY`/`CLOUDINARY_API_SECRET` en `.env` — ver `.env.example`. Sin esas credenciales, subir una imagen desde el admin muestra un error explicando qué falta (mismo patrón que Mercado Pago en la Fase 4).
+- Credenciales reales cargadas en `.env` (cuenta de Cloudinary ya creada). Falta probar una subida real desde `/admin/productos` para confirmar de punta a punta.
 
 ## Notas de la Fase 4 (en curso)
 

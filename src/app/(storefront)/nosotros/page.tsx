@@ -1,10 +1,12 @@
 import Image from "next/image";
 import type { Metadata } from "next";
 import { HeartIcon } from "@/components/ui/Decorations";
+import { SocialLinks } from "@/components/ui/SocialLinks";
 
 export const metadata: Metadata = {
-  title: "Nosotros | Peluditos Club",
-  description: "Quiénes somos, nuestro blog y la comunidad Peluditos Club.",
+  title: "Nosotros | Che Peludos",
+  description: "Quiénes somos, nuestro blog y la comunidad Che Peludos.",
+  alternates: { canonical: "/nosotros" },
 };
 
 export default function NosotrosPage() {
@@ -13,7 +15,7 @@ export default function NosotrosPage() {
       <div className="text-center">
         <h1 className="text-2xl font-extrabold sm:text-3xl">Quiénes somos</h1>
         <p className="mx-auto mt-3 max-w-2xl text-brand-gray">
-          Peluditos Club nació de una idea simple: que consentir a tu mascota sea fácil, seguro y
+          Che Peludos nació de una idea simple: que consentir a tu mascota sea fácil, seguro y
           con productos pensados con amor. Elegimos cada artículo pensando en la felicidad y el
           bienestar de tu peludito, todos los días.
         </p>
@@ -53,6 +55,7 @@ export default function NosotrosPage() {
           Seguinos en nuestras redes para ver a los peluditos de la comunidad, sorteos y novedades
           de la tienda.
         </p>
+        <SocialLinks className="mt-3" />
       </section>
     </div>
   );

@@ -19,14 +19,14 @@ function Logo() {
     <Link href="/" className="flex shrink-0 items-center gap-2">
       <Image
         src="/images/brand/logo-mark.png"
-        alt="Peluditos Club"
+        alt="Che Peludos"
         width={36}
         height={36}
         className="h-9 w-9"
         priority
       />
       <span className="text-lg font-extrabold leading-none text-brand-black sm:text-xl">
-        Peluditos <span className="font-script text-brand-yellow">Club</span>
+        Che <span className="font-script text-brand-yellow">Peludos</span>
       </span>
     </Link>
   );

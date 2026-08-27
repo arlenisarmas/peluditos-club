@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { ComingSoon } from "@/components/ui/ComingSoon";
 
-export const metadata: Metadata = { title: "Mis pedidos | Peluditos Club" };
+export const metadata: Metadata = { title: "Mis pedidos | Che Peludos" };
 
 export default function PedidosPage() {
   return (
