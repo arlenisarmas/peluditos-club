@@ -15,13 +15,13 @@ export default async function OfertasPage() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <div className="relative overflow-hidden rounded-2xl">
+      <div className="relative h-40 w-full overflow-hidden rounded-2xl bg-brand-gray-light sm:h-56">
         <Image
           src="/images/banners/promo-envio-gratis.jpg"
           alt="Envío gratis en compras superiores a $699"
-          width={1280}
-          height={480}
-          className="h-40 w-full object-cover sm:h-56"
+          fill
+          sizes="(min-width: 1024px) 1152px, 100vw"
+          className="object-contain object-center"
           priority
         />
       </div>
