@@ -4,7 +4,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { requireAdminSession } from "@/lib/auth";
+import { requirePermission } from "@/lib/authz";
 import { deleteImage, publicIdFromUrl, uploadImage } from "@/lib/cloudinary";
 
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5 MB
@@ -83,7 +83,7 @@ function revalidateStorefront(slug?: string) {
 }
 
 export async function createProduct(formData: FormData) {
-  await requireAdminSession();
+  await requirePermission("products:write");
   const data = parseForm(formData);
   const product = await prisma.product.create({
     data: { ...data, images: [], thumbnail: "" },
@@ -94,7 +94,7 @@ export async function createProduct(formData: FormData) {
 }
 
 export async function updateProduct(id: string, formData: FormData) {
-  await requireAdminSession();
+  await requirePermission("products:write");
   const data = parseForm(formData);
   const product = await prisma.product.update({ where: { id }, data });
   revalidateStorefront(product.slug);
@@ -103,7 +103,7 @@ export async function updateProduct(id: string, formData: FormData) {
 }
 
 export async function deleteProduct(id: string) {
-  await requireAdminSession();
+  await requirePermission("products:write");
   const product = await prisma.product.delete({ where: { id } });
   for (const image of product.images) {
     await deleteImageFile(image);
@@ -143,7 +143,7 @@ function validateImageFile(file: FormDataEntryValue | null): file is File {
 }
 
 export async function uploadProductImage(id: string, formData: FormData) {
-  await requireAdminSession();
+  await requirePermission("products:write");
   const file = formData.get("file");
   validateImageFile(file);
 
@@ -165,7 +165,7 @@ export async function uploadProductImage(id: string, formData: FormData) {
 }
 
 export async function replaceProductImage(id: string, oldImagePath: string, formData: FormData) {
-  await requireAdminSession();
+  await requirePermission("products:write");
   const file = formData.get("file");
   validateImageFile(file);
 
@@ -188,7 +188,7 @@ export async function replaceProductImage(id: string, oldImagePath: string, form
 }
 
 export async function removeProductImage(id: string, imagePath: string) {
-  await requireAdminSession();
+  await requirePermission("products:write");
   const product = await prisma.product.findUniqueOrThrow({ where: { id } });
   const images = product.images.filter((img) => img !== imagePath);
   const thumbnail = product.thumbnail === imagePath ? images[0] || "" : product.thumbnail;
@@ -201,14 +201,14 @@ export async function removeProductImage(id: string, imagePath: string) {
 }
 
 export async function setProductThumbnail(id: string, imagePath: string) {
-  await requireAdminSession();
+  await requirePermission("products:write");
   const product = await prisma.product.update({ where: { id }, data: { thumbnail: imagePath } });
   revalidateStorefront(product.slug);
   revalidatePath(`/admin/productos/${id}`);
 }
 
 export async function reorderProductImage(id: string, imagePath: string, direction: "up" | "down") {
-  await requireAdminSession();
+  await requirePermission("products:write");
   const product = await prisma.product.findUniqueOrThrow({ where: { id } });
   const images = [...product.images];
   const index = images.indexOf(imagePath);

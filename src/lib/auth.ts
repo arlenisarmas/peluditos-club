@@ -1,5 +1,4 @@
 import type { NextAuthOptions } from "next-auth";
-import { getServerSession } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
@@ -22,41 +21,33 @@ export const authOptions: NextAuthOptions = {
 
         const email = credentials.email.toLowerCase().trim();
         // Máximo 5 intentos cada 15 minutos por email, para frenar fuerza bruta
-        // contra el único usuario admin. No distinguimos el motivo en la
+        // contra cualquier cuenta interna. No distinguimos el motivo en la
         // respuesta (misma pantalla de "email o contraseña incorrectos") para
         // no darle pistas a quien esté probando contraseñas.
         if (isRateLimited(`admin-login:${email}`, 5, 15 * 60 * 1000)) return null;
 
-        const admin = await prisma.adminUser.findUnique({ where: { email } });
-        if (!admin) return null;
+        const user = await prisma.user.findUnique({ where: { email } });
+        if (!user || !user.active) return null;
 
-        const valid = await bcrypt.compare(credentials.password, admin.passwordHash);
+        const valid = await bcrypt.compare(credentials.password, user.passwordHash);
         if (!valid) return null;
 
-        return { id: admin.id, email: admin.email, name: admin.name ?? admin.email };
+        return { id: user.id, email: user.email, name: user.name ?? user.email, role: user.role };
       },
     }),
   ],
   callbacks: {
     async jwt({ token, user }) {
-      if (user) token.id = user.id;
+      if (user) {
+        token.id = user.id;
+        token.role = user.role;
+      }
       return token;
     },
     async session({ session, token }) {
-      if (session.user) (session.user as { id?: string }).id = token.id as string;
+      session.user.id = token.id;
+      session.user.role = token.role;
       return session;
     },
   },
 };
-
-// Las Server Actions del admin (src/lib/actions/*) son, debajo, un endpoint
-// HTTP más — el proxy y el layout del dashboard solo protegen el HTML de la
-// página, no bloquean una llamada directa a la action. Por eso cada action
-// que crea, edita o borra algo empieza llamando a esto.
-export async function requireAdminSession() {
-  const session = await getServerSession(authOptions);
-  if (!session) {
-    throw new Error("No autorizado.");
-  }
-  return session;
-}

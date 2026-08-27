@@ -1,4 +1,7 @@
-export default function AdminPedidosPage() {
+import { requirePagePermission } from "@/lib/authz";
+
+export default async function AdminPedidosPage() {
+  await requirePagePermission("orders:read");
   return (
     <div>
       <h1 className="text-xl font-bold">Pedidos</h1>

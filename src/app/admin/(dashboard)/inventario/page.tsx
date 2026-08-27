@@ -1,9 +1,13 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { requirePagePermission } from "@/lib/authz";
+import { StockEditor } from "@/components/admin/StockEditor";
 
 const LOW_STOCK_THRESHOLD = 10;
 
 export default async function AdminInventarioPage() {
+  await requirePagePermission("inventory:write");
+
   const products = await prisma.product.findMany({ orderBy: { stock: "asc" } });
   const outOfStock = products.filter((p) => p.stock === 0);
   const lowStock = products.filter((p) => p.stock > 0 && p.stock <= LOW_STOCK_THRESHOLD);
@@ -39,7 +43,9 @@ export default async function AdminInventarioPage() {
                           </Link>
                         </td>
                         <td className="px-4 py-2 text-brand-gray">{product.sku}</td>
-                        <td className="px-4 py-2 text-right font-semibold">{product.stock} u.</td>
+                        <td className="px-4 py-2">
+                          <StockEditor productId={product.id} stock={product.stock} />
+                        </td>
                       </tr>
                     ))}
                   </tbody>

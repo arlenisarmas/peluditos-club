@@ -4,6 +4,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 import { SessionProvider } from "@/components/providers/SessionProvider";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { SignOutButton } from "@/components/admin/SignOutButton";
@@ -14,8 +15,13 @@ export default async function AdminDashboardLayout({ children }: { children: Rea
   const session = await getServerSession(authOptions);
   // El proxy (src/proxy.ts) ya filtra esto de forma optimista antes de
   // llegar acá; esta es la verificación real de autorización, como recomienda
-  // Next.js (el proxy no debe ser la única barrera de auth).
-  if (!session) redirect("/admin/login");
+  // Next.js (el proxy no debe ser la única barrera de auth). Además, se
+  // vuelve a consultar la base para el estado "active": un usuario
+  // desactivado no debe poder seguir entrando solo porque su JWT viejo
+  // todavía es válido.
+  if (!session?.user?.id) redirect("/admin/login");
+  const user = await prisma.user.findUnique({ where: { id: session.user.id } });
+  if (!user || !user.active) redirect("/admin/login");
 
   return (
     <SessionProvider>
@@ -26,7 +32,7 @@ export default async function AdminDashboardLayout({ children }: { children: Rea
             <span className="font-bold">Admin</span>
           </Link>
           <div className="mt-6">
-            <AdminSidebar />
+            <AdminSidebar role={user.role} />
           </div>
         </aside>
 
@@ -37,12 +43,12 @@ export default async function AdminDashboardLayout({ children }: { children: Rea
                 ← Ver la tienda
               </Link>
               <div className="flex items-center gap-3">
-                <span className="hidden text-sm text-brand-gray sm:inline">{session?.user?.email}</span>
+                <span className="hidden text-sm text-brand-gray sm:inline">{user.email}</span>
                 <SignOutButton />
               </div>
             </div>
             <div className="mt-3 -mx-1 overflow-x-auto sm:hidden">
-              <AdminSidebar horizontal />
+              <AdminSidebar horizontal role={user.role} />
             </div>
           </header>
           <main className="flex-1 p-4 sm:p-6">{children}</main>

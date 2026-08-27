@@ -24,18 +24,26 @@ async function main() {
   }
   console.log(`Productos: ${productsSeedData.length} listos.`);
 
-  const { ADMIN_EMAIL, ADMIN_PASSWORD } = process.env;
-  if (ADMIN_EMAIL && ADMIN_PASSWORD) {
+  // ADMIN_INITIAL_PASSWORD es el nombre nuevo (deja claro que es solo para el
+  // arranque); se acepta también ADMIN_PASSWORD por compatibilidad con el
+  // .env de antes del sistema de roles.
+  const { ADMIN_EMAIL, ADMIN_INITIAL_PASSWORD, ADMIN_PASSWORD } = process.env;
+  const initialPassword = ADMIN_INITIAL_PASSWORD || ADMIN_PASSWORD;
+
+  if (ADMIN_EMAIL && initialPassword) {
     const email = ADMIN_EMAIL.toLowerCase().trim();
-    const passwordHash = await bcrypt.hash(ADMIN_PASSWORD, 12);
-    await prisma.adminUser.upsert({
-      where: { email },
-      update: { passwordHash },
-      create: { email, passwordHash },
-    });
-    console.log(`Usuario admin listo: ${email}`);
+    const existing = await prisma.user.findUnique({ where: { email } });
+    if (existing) {
+      console.log(`Usuario ${email} ya existe (rol ${existing.role}) — no se toca ni la contraseña ni el rol.`);
+    } else {
+      const passwordHash = await bcrypt.hash(initialPassword, 12);
+      await prisma.user.create({
+        data: { email, passwordHash, role: "SUPER_ADMIN" },
+      });
+      console.log(`Super admin creado: ${email}`);
+    }
   } else {
-    console.log("ADMIN_EMAIL/ADMIN_PASSWORD no están en .env — se omite la creación del usuario admin.");
+    console.log("ADMIN_EMAIL/ADMIN_INITIAL_PASSWORD no están en .env — se omite la creación del super admin.");
   }
 }
 

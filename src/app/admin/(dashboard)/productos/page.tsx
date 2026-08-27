@@ -1,12 +1,14 @@
 import Image from "next/image";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { requirePagePermission } from "@/lib/authz";
 
 function formatPrice(value: number) {
   return `$${value.toLocaleString("es-AR")}`;
 }
 
 export default async function AdminProductosPage() {
+  await requirePagePermission("products:write");
   const products = await prisma.product.findMany({ orderBy: { createdAt: "desc" } });
 
   return (

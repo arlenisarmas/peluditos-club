@@ -1,8 +1,10 @@
 import { prisma } from "@/lib/prisma";
+import { requirePagePermission } from "@/lib/authz";
 import { CategoryRow } from "@/components/admin/CategoryRow";
 import { NewCategoryForm } from "@/components/admin/NewCategoryForm";
 
 export default async function AdminCategoriasPage() {
+  await requirePagePermission("categories:write");
   const categories = await prisma.category.findMany({ orderBy: { order: "asc" } });
 
   return (

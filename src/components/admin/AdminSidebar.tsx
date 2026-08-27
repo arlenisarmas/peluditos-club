@@ -2,21 +2,26 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import type { Role } from "@prisma/client";
+import { hasPermission, type Permission } from "@/lib/permissions";
 
-const LINKS = [
+const LINKS: { href: string; label: string; exact?: boolean; permission?: Permission }[] = [
   { href: "/admin", label: "Resumen", exact: true },
-  { href: "/admin/productos", label: "Productos" },
-  { href: "/admin/categorias", label: "Categorías" },
-  { href: "/admin/inventario", label: "Inventario" },
-  { href: "/admin/pedidos", label: "Pedidos" },
+  { href: "/admin/productos", label: "Productos", permission: "products:write" },
+  { href: "/admin/categorias", label: "Categorías", permission: "categories:write" },
+  { href: "/admin/inventario", label: "Inventario", permission: "inventory:write" },
+  { href: "/admin/pedidos", label: "Pedidos", permission: "orders:read" },
+  { href: "/admin/usuarios", label: "Usuarios", permission: "users:write" },
+  { href: "/admin/perfil", label: "Mi perfil" },
 ];
 
-export function AdminSidebar({ horizontal = false }: { horizontal?: boolean }) {
+export function AdminSidebar({ horizontal = false, role }: { horizontal?: boolean; role: Role }) {
   const pathname = usePathname();
+  const links = LINKS.filter((link) => !link.permission || hasPermission(role, link.permission));
 
   return (
     <nav className={`flex gap-1 ${horizontal ? "flex-row" : "flex-col"}`}>
-      {LINKS.map((link) => {
+      {links.map((link) => {
         const active = link.exact ? pathname === link.href : pathname.startsWith(link.href);
         return (
           <Link

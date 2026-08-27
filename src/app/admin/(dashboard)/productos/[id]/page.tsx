@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { requirePagePermission } from "@/lib/authz";
 import { mapProduct } from "@/lib/data/products";
 import { updateProduct } from "@/lib/actions/products";
 import { ProductForm } from "@/components/admin/ProductForm";
@@ -11,6 +12,7 @@ interface EditProductoPageProps {
 }
 
 export default async function EditProductoPage({ params }: EditProductoPageProps) {
+  await requirePagePermission("products:write");
   const { id } = await params;
   const [row, categories] = await Promise.all([
     prisma.product.findUnique({ where: { id } }),

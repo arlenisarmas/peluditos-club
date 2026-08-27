@@ -4,7 +4,9 @@ import { FormEvent, Suspense, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
+import Link from "next/link";
 import { Button } from "@/components/ui/Button";
+import { PasswordInput } from "@/components/ui/PasswordInput";
 
 function LoginForm() {
   const router = useRouter();
@@ -54,21 +56,20 @@ function LoginForm() {
               className="mt-1 w-full rounded-lg border border-black/10 px-3 py-2 text-sm outline-none focus:border-brand-yellow"
             />
           </div>
-          <div>
-            <label htmlFor="password" className="text-sm font-medium">Contraseña</label>
-            <input
-              id="password"
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-black/10 px-3 py-2 text-sm outline-none focus:border-brand-yellow"
-            />
-          </div>
+          <PasswordInput
+            id="password"
+            label="Contraseña"
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
           {error && <p className="text-sm text-brand-coral">{error}</p>}
           <Button type="submit" disabled={loading} className="mt-2 w-full">
             {loading ? "Entrando..." : "Entrar"}
           </Button>
+          <Link href="/admin/forgot-password" className="text-center text-xs text-brand-gray hover:text-brand-black">
+            ¿Olvidaste tu contraseña?
+          </Link>
         </form>
       </div>
     </div>
