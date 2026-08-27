@@ -17,7 +17,7 @@ export default async function OfertasPage() {
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="relative h-40 w-full overflow-hidden rounded-2xl bg-brand-gray-light sm:h-56">
         <Image
-          src="/images/banners/promo-envio-gratis.jpg"
+          src="/images/banners/promo-envio-gratis.png"
           alt="Envío gratis en compras superiores a $699"
           fill
           sizes="(min-width: 1024px) 1152px, 100vw"
